@@ -1,0 +1,75 @@
+VEC-VG8M - Vidius Electric Corporation Portable Computer
+
+╔═══════════════════════════════════════════════════╗
+║                   Memory Map                      ║
+╠═══════╤═══════╤═════╤═════════════════════════════╣
+║ Addr  │ Size  │ RWc │ Description                 ║
+╟───────┼───────┼─────┼─────────────────────────────╢
+║ 0000h │  800h │ R-- │ BIOS                        ║
+║ 0800h │  700h │ RW- │ Reserved system RAM         ║
+~       ~       ~     ~                             ~
+║ 4000h │ 4000h │ RT--│ 16K RAM                     ║
+║ 8000h │ 8000h │ R-c-│ 32K ROM                     ║
+╠═══════╧═══════╧═════╧═════════════════════════════╣
+║ [R] Readable                                      ║
+║ [W] Writable                                      ║
+║ [c] Lives on cartridge. Size represents an upper  ║
+║     limit, but may be less.                       ║
+╚═══════════════════════════════════════════════════╝
+
+╔═══════════════════════════════════════════════════╗
+║         Memory Mapped Hardware Registers          ║
+╠═══════╤═══════╤════╤══════════════════════════════╣
+║ Addr  │ Size  │ RW │ Description                  ║
+╟───────┼───────┼────┼──────────────────────────────╢
+║ 0F00h │   40h │ RW │ Palettes                     ║
+║ 0F40h │    2  │ RW │ Map nametable pointer        ║
+║ 0F42h │    2  │ RW │ Map tile pointer             ║
+║ 0F44h │    1  │ RW │ Map height                   ║
+║ 0F45h │    1  │ RW │ Map width                    ║
+║ 0F46h │    2  │ RW │ Map V scroll                 ║
+║ 0F48h │    2  │ RW │ Map H scroll                 ║
+║ 0F4Ah │    2  │ RW │ Text buffer pointer          ║
+║ 0F4Ch │    1  │ RW │ Text buffer height           ║
+║ 0F4Dh │    1  │ RW │ Text buffer width            ║
+║ 0F4Eh │    2  │ RW │ Text buffer V scroll         ║
+║ 0F50h │    2  │ RW │ Text buffer H scroll         ║
+║ 0F52h │    2  │ RW │ Sprite table pointer         ║
+║ 0F54h │    2  │ RW │ Sprite tile pointer          ║
+║ 0F56h │    1  │ RW │ Sprite count                 ║
+║ 0F58h │    2  │ R- │ Face buttons & pad           ║
+╠═══════╧═══════╧════╧══════════════════════════════╣
+║ [R] Readable                                      ║
+║ [W] Writable                                      ║
+╚═══════════════════════════════════════════════════╝
+
+╔═══════════════════════════════════════════════════╗
+║                    Interrupts                     ║
+╠═════════╤═════╤═══════════════════════════════════╣
+║ Device  │ INT │ Description                       ║
+╟─────────┼─────┼───────────────────────────────────╢
+║ System  │ NMI │ Reset                             ║
+╟─────────┼─────┼───────────────────────────────────╢
+║ GPU     │ 20h │ Vertical blank                    ║
+║         │ 22h │ Horizontal blank                  ║
+╠═════════╧═════╧═══════════════════════════════════╣
+║                                                   ║
+╚═══════════════════════════════════════════════════╝
+
+╔═══════════════════════════════════════════════════╗
+║                 Cartridge Header                  ║
+╠══════╤══════╤═════════╤═══════════════════════════╣
+║ Addr │ Size │ Format  │ Description               ║
+╟──────┼──────┼─────────┼───────────────────────────╢
+║ 8000 │ 0x08 │ ASCII   │ "VEC-VG8M"                ║
+║ 8008 │ 0x20 │ ASCII   │ Title                     ║
+║ 8028 │ 0x20 │ ASCII   │ Developer                 ║
+║ 8048 │ 0x02 │ ASCII   │ ISO language code         ║
+║ 804A │ 0x02 │ bitmask │ Cartridge Flags           ║
+║ 804C │ 0x01 │ int     │ Version                   ║
+║ 804D │ 0xB3 │ -       │ Reserved                  ║
+╠══════╧══════╧═════════╧═══════════════════════════╣
+║                                                   ║
+╚═══════════════════════════════════════════════════╝
+
+TODO design and implement audio system

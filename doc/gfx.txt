@@ -1,0 +1,103 @@
+VEC-VG8M - Vidius Electric Corporation Portable Computer
+
+There are eight palettes of eight colors each. The colors are pulled from the
+32-color hardware palette (shamelessly db32). Each color entry is a single byte;
+the 3 most significant bits are ignored.
+
+╔═══════════════════════════════════════════════════╗
+║                    Interrupts                     ║
+╠═════════╤═════╤═══════════════════════════════════╣
+║ Device  │ INT │ Description                       ║
+╟─────────┼─────┼───────────────────────────────────╢
+║ GPU     │ 20h │ Vertical blank                    ║
+║         │ 22h │ Horizontal blank                  ║
+╠═════════╧═════╧═══════════════════════════════════╣
+║                                                   ║
+╚═══════════════════════════════════════════════════╝
+
+╔═══════════════════════════════════════════════════╗
+║         Memory Mapped Hardware Registers          ║
+╠═══════╤═══════╤════╤══════════════════════════════╣
+║ Addr  │ Size  │ RW │ Description                  ║
+╟───────┼───────┼────┼──────────────────────────────╢
+║ 0F00h │   40h │ RW │ Palettes                     ║
+║ 0F40h │    2  │ RW │ Map nametable pointer        ║
+║ 0F42h │    2  │ RW │ Map tile pointer             ║
+║ 0F44h │    1  │ RW │ Map height                   ║
+║ 0F45h │    1  │ RW │ Map width                    ║
+║ 0F46h │    2  │ RW │ Map V scroll                 ║
+║ 0F48h │    2  │ RW │ Map H scroll                 ║
+║ 0F4Ah │    2  │ RW │ Text buffer pointer          ║
+║ 0F4Ch │    1  │ RW │ Text buffer height           ║
+║ 0F4Dh │    1  │ RW │ Text buffer width            ║
+║ 0F4Eh │    2  │ RW │ Text buffer V scroll         ║
+║ 0F50h │    2  │ RW │ Text buffer H scroll         ║
+║ 0F52h │    2  │ RW │ Sprite table pointer         ║
+║ 0F54h │    2  │ RW │ Sprite tile pointer          ║
+║ 0F56h │    1  │ RW │ Sprite count                 ║
+╠═══════╧═══════╧════╧══════════════════════════════╣
+║ [R] Readable                                      ║
+║ [W] Writable                                      ║
+╚═══════════════════════════════════════════════════╝
+
+MAP LAYER
+=========
+
+The MAP layer is an array of two-byte tile pointers. Tiles are laid out in
+row major order from left to right, top to bottom.
+
+Pattern data for MAP should be in snes 2bpp format.
+
+TODO explain 2bpp pattern format instead of referencing snes
+
+    ╔═══════════════════════════════════╗
+    ║               WORD                ║
+    ╟───────────────────────────────────╢
+    ║ 7 6 5 4 3 2 1 0   7 6 5 4 3 2 1 0 ║
+    ╚═╤═╤═╤═╤═╤═══╤═╤═══╤═╤═╤═╤═╤═╤═╤═╤═╝
+      │ │ │ │ │   │ │   │ │ │ │ │ │ │ │
+      │ │ │ │ │   └─┴───┴─┴─┴─┴─┴─┴─┴─┴─ Pattern Index
+      │ │ │ │ └───────────────────────── Flip X
+      │ │ │ └─────────────────────────── Flip Y
+      └─┴─┴───────────────────────────── Palette
+
+TEXT LAYER
+==========
+
+The TEXT layer is much simpler: an array of single-byte characters drawn from
+the system character set. TEXT uses palette 0 and treats the first color as
+transparency.
+
+SPRITE LAYER
+============
+
+The sprite table is an array of four-byte sprite descriptors.
+
+Pattern data for sprites should be in snes 3bpp format.
+
+TODO explain more about the sprite format, wide & tall sprites &c.
+TODO explain 3bpp pattern format instead of referencing snes
+
+    ╔═════════════════╤═════════════════╗
+    ║      BYTE       │      BYTE       ║
+    ╟─────────────────┼─────────────────╢
+    ║ 7 6 5 4 3 2 1 0 │ 7 6 5 4 3 2 1 0 ║
+    ╚═╤═╤═╤═╤═╤═╤═╤═╤═╧═╤═╤═╤═╤═╤═╤═╤═╤═╝
+      │ │ │ │ │ │ │ │   │ │ │ │ │ │ │ │
+      │ │ │ │ │ │ │ │   └─┴─┴─┴─┴─┴─┴─┴─ X Position
+      └─┴─┴─┴─┴─┴─┴─┴─────────────────── Y Position
+
+    ╔═══════════════════════════════════╗
+    ║               WORD                ║
+    ╟───────────────────────────────────╢
+    ║ 7 6 5 4 3 2 1 0   7 6 5 4 3 2 1 0 ║
+    ╚═╤═╤═╤═╤═╤═╤═╤═╤═══╤═╤═╤═╤═╤═╤═╤═╤═╝
+      │ │ │ │ │ │ │ │   │ │ │ │ │ │ │ │
+      │ │ │ │ │ │ │ └───┴─┴─┴─┴─┴─┴─┴─┴─ Pattern Index
+      │ │ │ │ │ │ └───────────────────── Wide
+      │ │ │ │ │ └─────────────────────── Tall
+      │ │ │ │ └───────────────────────── Flip X
+      │ │ │ └─────────────────────────── Flip Y
+      └─┴─┴───────────────────────────── Palette
+
+A maximum of eight sprites can be drawn per scanline.

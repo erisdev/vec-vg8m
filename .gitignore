@@ -1,0 +1,11 @@
+/vendor
+/vg8m
+.DS_Store
+*.bin
+*.ihx
+*.lk
+*.map
+*.noi
+*.rel
+*.o
+*.S
