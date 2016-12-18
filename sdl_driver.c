@@ -201,8 +201,9 @@ int main(int argc, char **argv) {
     while (running) {
         if (paused) {
             if (should_step) {
-                vg8m_dump_instruction(emu);
+                vg8m_dump_instruction(emu, stderr);
                 vg8m_step_instruction(emu);
+                vg8m_dump_registers(emu, stderr);
                 _display(emu, NULL);
                 should_step = false;
             }

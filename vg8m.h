@@ -87,7 +87,8 @@ void     vg8m_write16(VG8M *emu, uint16_t addr, uint16_t data);
 void vg8m_step_frame(VG8M *emu);
 void vg8m_step_instruction(VG8M *emu);
 
-void vg8m_dump_instruction(VG8M* emu);
+void vg8m_dump_instruction(VG8M* emu, FILE *file);
+void vg8m_dump_registers(VG8M *emu, FILE *file);
 
 void vg8m_vblank(VG8M *emu);
 void vg8m_hblank(VG8M *emu);
