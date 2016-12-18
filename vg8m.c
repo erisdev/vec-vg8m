@@ -97,6 +97,10 @@ void vg8m_fin(VG8M *emu) {
     _unload_file(emu->cartridge_rom, CART_ROM_SIZE);
 }
 
+void vg8m_reset(VG8M *emu) {
+    Z80NMI(emu->cpu);
+}
+
 static uint8_t *_load_file(uint16_t size, const char *filename) {
     uint8_t *buffer = NULL;
 
@@ -251,6 +255,34 @@ void vg8m_step_instruction(VG8M *emu) {
     }
 }
 
+void vg8m_dump_instruction(VG8M* emu) {
+    Z80Context *cpu = emu->cpu;
+    Z80Regs regs = cpu->R1;
+    uint8_t flags = regs.br.F;
+
+    char hexbuffer[256];
+    char asmbuffer[256];
+    Z80Debug(emu->cpu, hexbuffer, asmbuffer);
+
+    fprintf(stderr, "%-8s; %s\n", hexbuffer, asmbuffer);
+    fprintf(stderr, "\tAF %04X   BC %04X   DE %04X\n",
+        regs.wr.AF, regs.wr.BC, regs.wr.DE);
+    fprintf(stderr, "\tHL %04X   IX %04X   IY %04X\n",
+        regs.wr.HL, regs.wr.IX, regs.wr.IY);
+    fprintf(stderr, "\tPC %04x   SP %04X\n",
+        emu->cpu->PC, regs.wr.SP);
+    fprintf(stderr, "\tFLAGS %c%c%c%c%c%c\n",
+        flags & F_C  ? 'C'  : '-',
+        flags & F_N  ? 'N'  : '-',
+        flags & F_PV ? 'V'  : '-',
+        flags & F_H  ? 'H'  : '-',
+        flags & F_Z  ? 'Z'  : '-',
+        flags & F_S  ? 'S'  : '-');
+    fprintf(stderr, "\tIM %d (%s)\n",
+        emu->cpu->IM, (emu->cpu->IFF1 ? "enabled" : "disabled"));
+    fprintf(stderr, "\n");
+}
+
 void vg8m_vblank(VG8M *emu) {
     Z80INT(emu->cpu, INT_VBLANK);
 }
@@ -269,7 +301,7 @@ static uint8_t _readio(VG8M *emu, uint16_t addr) {
 
 static void _writeio(VG8M *emu, uint16_t addr, uint8_t data) {
     if ((addr & 0xFF) == 0xFF) {
-        fprintf(stderr, "%04x %04x %02x\n", emu->cpu->PC, addr, data);
+        putc(data, stderr);
     }
 }
 

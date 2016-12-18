@@ -12,5 +12,5 @@ CC         = sdcc -mz80
 AS         = sdasz80
 OBJCOPY    = sdobjcopy
 
-CFLAGS     = -I$(VGDEV)/include
+CFLAGS     = -I$(VGDEV)/include --debug
 LIBS       =

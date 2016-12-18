@@ -1,6 +1,8 @@
 /vg8m
 .DS_Store
+*.adb
 *.bin
+*.cdb
 *.ihx
 *.lk
 *.map

@@ -72,6 +72,8 @@ enum e_vg8m_button {
 void vg8m_init(VG8M *emu);
 void vg8m_fin(VG8M *emu);
 
+void vg8m_reset(VG8M *emu);
+
 bool vg8m_load_system(VG8M *emu, const char *rom_filename, const char *charset_filename);
 bool vg8m_load_cart(VG8M *emu, const char *filename);
 
@@ -84,5 +86,8 @@ void     vg8m_write16(VG8M *emu, uint16_t addr, uint16_t data);
 
 void vg8m_step_frame(VG8M *emu);
 void vg8m_step_instruction(VG8M *emu);
+
+void vg8m_dump_instruction(VG8M* emu);
+
 void vg8m_vblank(VG8M *emu);
 void vg8m_hblank(VG8M *emu);
