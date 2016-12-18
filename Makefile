@@ -1,31 +1,36 @@
-LIBS = sdl2
+Z80_DIR = vendor/libz80
+PACKAGES = sdl2
 
-CFLAGS += -iquote gen -iquote vendor/libz80 -g \
-	$(shell pkg-config --cflags $(LIBS))
+CFLAGS += -iquote gen -iquote $(Z80_DIR) -g \
+	$(shell pkg-config --cflags $(PACKAGES))
 
-LDFLAGS += -Lvendor/libz80 -g \
-	$(shell pkg-config --libs $(LIBS))
+LDFLAGS += -L$(Z80_DIR) -lz80 -g \
+	$(shell pkg-config --libs $(PACKAGES))
 
 .PHONY : all
 all : vg8m bios demo
 
-vg8m : sdl_driver.o vg8m.o video.o vendor/libz80/z80.o
+vg8m : sdl_driver.o vg8m.o video.o | libz80
 
 vg8m.o : vg8m.c vg8m.h
 video.o : video.c video.h vg8m.h
 sdl_driver.o : sdl_driver.c vg8m.h video.h
 
-gen/%.h : bios/%
-	xxd -i $< $@
-
-vendor/libz80/z80.o :
-	$(MAKE) -C vendor/libz80 z80.o
-
 .PHONY : clean
-clean : bios-clean demo-clean
-	$(RM) gen/*.h
+clean :
 	$(RM) *.o
 	$(RM) vg8m
+
+.PHONY : deepclean
+deepclean : clean libz80-clean bios-clean demo-clean
+
+.PHONY : libz80
+libz80 :
+	$(MAKE) -C vendor/libz80
+
+.PHONY : libz80-clean
+libz80-clean :
+	$(MAKE) -C vendor/libz80
 
 .PHONY : bios
 bios :

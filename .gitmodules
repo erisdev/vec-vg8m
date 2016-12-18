@@ -1,0 +1,3 @@
+[submodule "vendor/libz80"]
+	path = vendor/libz80
+	url = git@github.com:erisdev/libz80.git
