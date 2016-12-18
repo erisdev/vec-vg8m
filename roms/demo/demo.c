@@ -76,6 +76,8 @@ void main() {
     r_spr_count      = 1;
 
     __asm
+        ei
+
 00001$: halt
         jp 00001$
     __endasm;

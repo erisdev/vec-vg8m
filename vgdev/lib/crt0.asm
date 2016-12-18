@@ -4,14 +4,9 @@
         .globl  l__INITIALIZER
         .globl  s__INITIALIZED
 
-        .area   _HEADER (ABS)
-        .org    0x8000
-
-        .ascii  "VEC-VG8M"
-        .ascii  "                    "
-        .ascii  "                    "
-        .ascii  "  "
-        .dw     0x0000
+        .area   _HEADER (ABS, OVR)
+        .org    0x8080
+        .dw     init
 
         ; declare sections in the order they're meant to appear
         .area   _HOME
@@ -29,6 +24,10 @@
         .area   _CODE
 init:
         call    gsinit
+        call    _main
+done:
+        halt
+        jr      done
 
         .area   _GSINIT
 gsinit::
