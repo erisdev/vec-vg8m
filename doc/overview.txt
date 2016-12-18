@@ -67,7 +67,9 @@ VEC-VG8M - Vidius Electric Corporation Portable Computer
 ║ 8048 │ 0x02 │ ASCII   │ ISO language code         ║
 ║ 804A │ 0x02 │ bitmask │ Cartridge Flags           ║
 ║ 804C │ 0x01 │ int     │ Version                   ║
-║ 804D │ 0xB3 │ -       │ Reserved                  ║
+║ 804D │ 0x33 │ -       │ -                         ║
+║ 8080 │ 0x02 │ addr    │ Entry point               ║
+║ 804D │ 0x7E │ -       │ -                         ║
 ╠══════╧══════╧═════════╧═══════════════════════════╣
 ║                                                   ║
 ╚═══════════════════════════════════════════════════╝
