@@ -31,8 +31,12 @@
         .org 0x38
         reti
 
-        .strz "VEC-VG8ME SYS.ROM v1.2"
+        ; nmi jumps to 0x66, make it reboot
+        .org    0x66
+        jp      boot
+
         .even
+        .strz "VEC-VG8ME SYS.ROM v1.2"
 boot:
         ; set up interrupts with jump table at the end of RAM
         im      2               ; mode 2 is more versatile & fun
@@ -42,9 +46,9 @@ boot:
         ; fill jump table with default "ignore interrupt" handler
         ld      HL,#_int_ignore
         ld      (0x0E00),HL
-        ld      HL,#0xFF00
-        ld      DE,#0xFF02
-        ld      BC,#0xFE
+        ld      HL,#0x0E00
+        ld      DE,#0x0E02
+        ld      BC,#0x00FF
         ldir
 
         ; stack grows down from the top of user RAM
@@ -53,10 +57,6 @@ boot:
         ; finally, copy initializers & jump into the actual system rom
         call    gsinit
         jp      _system_main
-
-        ; nmi jumps to 0x66, make it reboot
-        .org    0x66
-        jp      boot
 
         ; declare sections in the order they're meant to appear
         .area   _HOME
