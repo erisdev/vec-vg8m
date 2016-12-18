@@ -87,8 +87,12 @@ void _scanline(VG8M *emu, void *_) {
     // SDL_UpdateWindowSurface(window);
 }
 
-long t = 0;
 void _display(VG8M *emu, void *_) {
+    static const int FPS_SAMPLES = 15;
+    static int t_last = 0;
+    static int dts[FPS_SAMPLES];
+    static int dti = 0;
+
 #ifdef USE_TEXTURE
     SDL_RenderCopy(renderer, screen, NULL, NULL);
     SDL_RenderPresent(renderer);
@@ -97,11 +101,27 @@ void _display(VG8M *emu, void *_) {
     SDL_UpdateWindowSurface(window);
 #endif // USE_TEXTURE
 
-    long t_last = t;
-    t = SDL_GetTicks();
+    long t = SDL_GetTicks();
     long dt = t - t_last;
     if (dt < MS_FRAME)
         SDL_Delay(MS_FRAME - dt);
+    t_last = t;
+
+    // add current frame dt to the sample buffer
+    dts[dti] = dt;
+    dti = (dti + 1) % FPS_SAMPLES;
+
+    if (dti == 0) {
+        // once the buffer rolls over, calculate average & update display
+        double dt_avg = 0;
+        for (int i = 0; i < FPS_SAMPLES; ++i)
+            dt_avg += dts[i];
+        dt_avg /= FPS_SAMPLES;
+
+        char buffer[20];
+        snprintf(buffer, sizeof(buffer), "VEC-VG8M - %02.0f ms", dt_avg);
+        SDL_SetWindowTitle(window, buffer);
+    }
 }
 
 int main(int argc, char **argv) {
