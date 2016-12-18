@@ -14,3 +14,20 @@ static short       __at(0x0F50) r_txt_hscroll;
 static const void* __at(0x0F52) r_spr_def_addr;
 static const void* __at(0x0F54) r_spr_pat_addr;
 static char        __at(0x0F56) r_spr_count;
+
+static short       __at(0x0F58) r_buttons;
+
+enum {
+    BUTTON_ALPHA = 0x0001,
+    BUTTON_BETA  = 0x0002,
+    BUTTON_GAMMA = 0x0004,
+    BUTTON_DELTA = 0x0008,
+
+    BUTTON_LT    = 0x0010,
+    BUTTON_RT    = 0x0020,
+
+    BUTTON_UP    = 0x0100,
+    BUTTON_DOWN  = 0x0200,
+    BUTTON_LEFT  = 0x0400,
+    BUTTON_RIGHT = 0x0800,
+};

@@ -164,6 +164,13 @@ error:
     return false;
 }
 
+void vg8m_set_buttons(VG8M *emu, VG8MButtonMask buttons, bool pressed) {
+    if (pressed)
+        emu->hwregs.buttons |= buttons;
+    else
+        emu->hwregs.buttons &= ~buttons;
+}
+
 uint8_t vg8m_read8(VG8M *emu, uint16_t addr) {
     return _readmem(emu, addr);
 }

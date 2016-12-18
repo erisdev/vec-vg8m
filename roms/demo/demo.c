@@ -91,8 +91,10 @@ static void VBLANK() __interrupt(0x20) {
     r_map_vscroll   = ++saved_vscroll;
     r_map_hscroll   = ++saved_hscroll;
 
-    sprites[0].hpos += 1;
-    sprites[0].vpos = 64 + (sprites[0].hpos & 0x1F);
+    if (r_buttons & BUTTON_UP)     sprites[0].vpos -= 1;
+    if (r_buttons & BUTTON_DOWN)   sprites[0].vpos += 1;
+    if (r_buttons & BUTTON_LEFT)   sprites[0].hpos -= 1;
+    if (r_buttons & BUTTON_RIGHT)  sprites[0].hpos += 1;
 }
 
 static void HBLANK() __interrupt(0x22) {

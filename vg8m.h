@@ -23,6 +23,10 @@ struct s_vg8m_hwregs {
     uint16_t spr_addr;
     uint16_t spr_pat_addr;
     uint8_t  spr_count;
+    uint8_t  _empty0;
+
+    /* inputs */
+    uint16_t buttons;
 };
 
 struct s_vg8m {
@@ -49,11 +53,29 @@ struct s_vg8m {
     int line;
 };
 
+typedef uint16_t VG8MButtonMask;
+enum e_vg8m_button {
+    VG8M_BUTTON_ALPHA = 0x0001,
+    VG8M_BUTTON_BETA  = 0x0002,
+    VG8M_BUTTON_GAMMA = 0x0004,
+    VG8M_BUTTON_DELTA = 0x0008,
+
+    VG8M_BUTTON_LT    = 0x0010,
+    VG8M_BUTTON_RT    = 0x0020,
+
+    VG8M_BUTTON_UP    = 0x0100,
+    VG8M_BUTTON_DOWN  = 0x0200,
+    VG8M_BUTTON_LEFT  = 0x0400,
+    VG8M_BUTTON_RIGHT = 0x0800,
+};
+
 void vg8m_init(VG8M *emu);
 void vg8m_fin(VG8M *emu);
 
 bool vg8m_load_system(VG8M *emu, const char *rom_filename, const char *charset_filename);
 bool vg8m_load_cart(VG8M *emu, const char *filename);
+
+void vg8m_set_buttons(VG8M *emu, VG8MButtonMask buttons, bool pressed);
 
 uint8_t  vg8m_read8(VG8M *emu, uint16_t addr);
 void     vg8m_write8(VG8M *emu, uint16_t addr, uint8_t data);

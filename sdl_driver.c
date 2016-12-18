@@ -32,6 +32,32 @@ void _input(VG8M *emu, void *_) {
         if (event.type == SDL_QUIT) {
             running = false;
         }
+        else if (event.type == SDL_KEYDOWN || event.type == SDL_KEYUP) {
+            if (!event.key.keysym.mod) {
+                VG8MButtonMask button;
+                if      (event.key.keysym.sym == SDLK_q)
+                    button = VG8M_BUTTON_LT;
+                else if (event.key.keysym.sym == SDLK_w)
+                    button = VG8M_BUTTON_GAMMA;
+                else if (event.key.keysym.sym == SDLK_e)
+                    button = VG8M_BUTTON_RT;
+                else if (event.key.keysym.sym == SDLK_a)
+                    button = VG8M_BUTTON_DELTA;
+                else if (event.key.keysym.sym == SDLK_s)
+                    button = VG8M_BUTTON_BETA;
+                else if (event.key.keysym.sym == SDLK_d)
+                    button = VG8M_BUTTON_ALPHA;
+                else if (event.key.keysym.sym == SDLK_UP)
+                    button = VG8M_BUTTON_UP;
+                else if (event.key.keysym.sym == SDLK_DOWN)
+                    button = VG8M_BUTTON_DOWN;
+                else if (event.key.keysym.sym == SDLK_LEFT)
+                    button = VG8M_BUTTON_LEFT;
+                else if (event.key.keysym.sym == SDLK_RIGHT)
+                    button = VG8M_BUTTON_RIGHT;
+                vg8m_set_buttons(emu, button, event.key.state);
+            }
+        }
     }
 }
 
