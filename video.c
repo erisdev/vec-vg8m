@@ -204,6 +204,9 @@ void vg8m_scanline(VG8M *emu, uint32_t *pixels) {
     VG8MRegisters *regs = &emu->hwregs;
 
     int y = emu->line;
+    for (int x = 0; x < VG8M_DISP_HEIGHT; ++x)
+        pixels[x] = VG8M_HWPALETTE[regs->palette[0][0]];
+
     if (regs->map_name_addr && regs->map_vsize && regs->map_hsize)
         scan_map(emu, y, pixels);
     if (regs->spr_addr && regs->spr_count)
