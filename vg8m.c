@@ -26,7 +26,7 @@ static void _writemem(VG8M *emu, uint16_t addr, uint8_t data);
 enum {
     SYS_ROM_SIZE  = 0x0800,
     SYS_RAM_SIZE  = 0x0700,
-    HWREGS_SIZE   = sizeof(GPURegisters),
+    HWREGS_SIZE   = sizeof(VG8MRegisters),
     CHAR_ROM_SIZE = 0x1000,
     USER_RAM_SIZE = 0x4000,
     CART_ROM_SIZE = 0x8000,
@@ -274,7 +274,7 @@ static uint8_t _readmem(VG8M *emu, uint16_t addr) {
         return emu->system_ram[addr - SYS_RAM_ADDR];
 
     else if (inregion(addr, HWREGS_ADDR, HWREGS_END))
-        return ((uint8_t*)&(emu->gpu_registers))[addr - HWREGS_ADDR];
+        return ((uint8_t*)&(emu->hwregs))[addr - HWREGS_ADDR];
 
     else if (inregion(addr, CHAR_ROM_ADDR, CHAR_ROM_END) && emu->system_charset)
         return emu->system_charset[addr - CHAR_ROM_ADDR];
@@ -293,7 +293,7 @@ static void _writemem(VG8M *emu, uint16_t addr, uint8_t data) {
         emu->system_ram[addr - SYS_RAM_ADDR] = data;
 
     else if (inregion(addr, HWREGS_ADDR, HWREGS_END))
-        ((uint8_t*)&(emu->gpu_registers))[addr - HWREGS_ADDR] = data;
+        ((uint8_t*)&(emu->hwregs))[addr - HWREGS_ADDR] = data;
 
     else if (inregion(addr, USER_RAM_ADDR, USER_RAM_END))
         emu->user_ram[addr - USER_RAM_ADDR] = data;

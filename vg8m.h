@@ -2,11 +2,12 @@
 #include "z80.h"
 
 typedef struct s_vg8m VG8M;
-typedef struct s_gpu_registers GPURegisters;
+typedef struct s_vg8m_hwregs VG8MRegisters;
 
 typedef void (*VG8MCallback)(VG8M *emu, void *param);
 
-struct s_gpu_registers {
+struct s_vg8m_hwregs {
+    /* gpu */
     uint8_t  palette[8][8];
     uint16_t map_name_addr;
     uint16_t map_pat_addr;
@@ -32,7 +33,7 @@ struct s_vg8m {
     uint8_t *system_charset;
     uint8_t *user_ram;
     uint8_t *cartridge_rom;
-    GPURegisters gpu_registers;
+    VG8MRegisters hwregs;
 
     VG8MCallback scanline_callback;
     void *scanline_param;

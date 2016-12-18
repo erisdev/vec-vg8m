@@ -83,16 +83,16 @@ static inline uint8_t sample_3bpp(VG8M *emu, uint16_t addr, bool flip_x, bool fl
 }
 
 static inline void scan_map(VG8M *emu, int y, uint32_t *pixels) {
-    GPURegisters *gpu = &emu->gpu_registers;
-    uint16_t sy = y + gpu->map_vscroll;
-    uint16_t ty = (sy >> 3) % gpu->map_vsize;
+    VG8MRegisters *regs = &emu->hwregs;
+    uint16_t sy = y + regs->map_vscroll;
+    uint16_t ty = (sy >> 3) % regs->map_vsize;
 
-    uint16_t name_base = gpu->map_name_addr + ty * 2 * gpu->map_hsize;
-    uint16_t pat_base = emu->gpu_registers.map_pat_addr;
+    uint16_t name_base = regs->map_name_addr + ty * 2 * regs->map_hsize;
+    uint16_t pat_base = emu->hwregs.map_pat_addr;
 
     for (int x = 0; x < VG8M_DISP_WIDTH; ++x) {
-        uint16_t sx = x + gpu->map_hscroll;
-        uint16_t tx = (sx>> 3) % gpu->map_hsize;
+        uint16_t sx = x + regs->map_hscroll;
+        uint16_t tx = (sx>> 3) % regs->map_hsize;
         uint16_t name = vg8m_read16(emu, name_base + tx * 2);
 
         bool flip_x   = name & 0x0800;
@@ -102,20 +102,20 @@ static inline void scan_map(VG8M *emu, int y, uint32_t *pixels) {
         uint8_t p = name >> 13;
         uint8_t c = sample_2bpp(emu, addr, flip_x, flip_y, sx & 7, sy & 7);
 
-        // pixels[x] = gpu->palette[p][c];
-        pixels[x] = VG8M_HWPALETTE[gpu->palette[p][c] & 0x1F];
+        // pixels[x] = regs->palette[p][c];
+        pixels[x] = VG8M_HWPALETTE[regs->palette[p][c] & 0x1F];
     }
 }
 
 static inline void scan_spr(VG8M *emu, int y, uint32_t *pixels) {
-    GPURegisters *gpu = &emu->gpu_registers;
+    VG8MRegisters *regs = &emu->hwregs;
 
-    uint16_t pat_base = emu->gpu_registers.spr_pat_addr;
+    uint16_t pat_base = emu->hwregs.spr_pat_addr;
 
     struct sprite sprites[SPRITE_LIMIT];
     int count = 0;
-    for (int i = 0; i < gpu->spr_count; ++i) {
-        uint16_t spr_base = gpu->spr_addr + i * 4;
+    for (int i = 0; i < regs->spr_count; ++i) {
+        uint16_t spr_base = regs->spr_addr + i * 4;
         uint8_t  vpos     = vg8m_read8(emu, spr_base);
         uint8_t  hpos     = vg8m_read8(emu, spr_base + 1);
         uint16_t pat_name = vg8m_read16(emu, spr_base + 2);
@@ -165,29 +165,29 @@ static inline void scan_spr(VG8M *emu, int y, uint32_t *pixels) {
                 if (!(sy & 7))
                     (void)0;
 
-                pixels[x] = VG8M_HWPALETTE[gpu->palette[p][c]];
+                pixels[x] = VG8M_HWPALETTE[regs->palette[p][c]];
             }
         }
     }
 }
 
 void scan_txt(VG8M *emu, int y, uint32_t *pixels) {
-    GPURegisters *gpu = &emu->gpu_registers;
+    VG8MRegisters *regs = &emu->hwregs;
 
-    if (y <  gpu->txt_vscroll) return;
-    if (y >= gpu->txt_vscroll + gpu->txt_vsize * 8) return;
+    if (y <  regs->txt_vscroll) return;
+    if (y >= regs->txt_vscroll + regs->txt_vsize * 8) return;
 
-    uint16_t sy = y - gpu->txt_vscroll;
+    uint16_t sy = y - regs->txt_vscroll;
     uint16_t ty = sy >> 3;
 
-    uint16_t name_base = gpu->txt_addr + ty * 2 * gpu->txt_hsize;
+    uint16_t name_base = regs->txt_addr + ty * 2 * regs->txt_hsize;
     uint16_t pat_base = 0x1000;
 
     for (int x = 0; x < VG8M_DISP_WIDTH; ++x) {
-        if (x <  gpu->txt_hscroll) continue;
-        if (x >= gpu->txt_hscroll + gpu->txt_hsize * 8) continue;
+        if (x <  regs->txt_hscroll) continue;
+        if (x >= regs->txt_hscroll + regs->txt_hsize * 8) continue;
 
-        uint16_t sx = x - gpu->txt_hscroll;
+        uint16_t sx = x - regs->txt_hscroll;
         uint16_t tx = sx >> 3;
         uint16_t name = vg8m_read8(emu, name_base + tx);
 
@@ -195,19 +195,19 @@ void scan_txt(VG8M *emu, int y, uint32_t *pixels) {
 
         uint8_t c = sample_1bpp(emu, addr, false, false, sx & 7, sy & 7);
 
-        // pixels[x] = gpu->palette[p][c];
-        if (c) pixels[x] = VG8M_HWPALETTE[gpu->palette[0][c] & 0x1F];
+        // pixels[x] = regs->palette[p][c];
+        if (c) pixels[x] = VG8M_HWPALETTE[regs->palette[0][c] & 0x1F];
     }
 }
 
 void vg8m_scanline(VG8M *emu, uint32_t *pixels) {
-    GPURegisters *gpu = &emu->gpu_registers;
+    VG8MRegisters *regs = &emu->hwregs;
 
     int y = emu->line;
-    if (gpu->map_name_addr && gpu->map_vsize && gpu->map_hsize)
+    if (regs->map_name_addr && regs->map_vsize && regs->map_hsize)
         scan_map(emu, y, pixels);
-    if (gpu->spr_addr && gpu->spr_count)
+    if (regs->spr_addr && regs->spr_count)
         scan_spr(emu, y, pixels);
-    if (gpu->txt_addr && gpu->txt_vsize && gpu->txt_hsize)
+    if (regs->txt_addr && regs->txt_vsize && regs->txt_hsize)
         scan_txt(emu, y, pixels);
 }
