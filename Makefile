@@ -22,7 +22,7 @@ vendor/libz80/z80.o :
 	$(MAKE) -C vendor/libz80 z80.o
 
 .PHONY : clean
-clean : bios-clean launchpad-clean demo-clean
+clean : bios-clean demo-clean
 	$(RM) gen/*.h
 	$(RM) *.o
 	$(RM) vg8m
