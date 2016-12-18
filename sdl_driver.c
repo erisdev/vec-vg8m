@@ -25,6 +25,44 @@ static SDL_Surface *screen = NULL, *window_surface = NULL;
 #endif // USE_TEXTURE
 
 static bool running;
+static bool paused;
+static bool should_step;
+
+static void _emulator_key(VG8M *emu, SDL_Keycode key, bool state) {
+    VG8MButtonMask button;
+    if      (key == SDLK_q)     button = VG8M_BUTTON_LT;
+    else if (key == SDLK_w)     button = VG8M_BUTTON_GAMMA;
+    else if (key == SDLK_e)     button = VG8M_BUTTON_RT;
+    else if (key == SDLK_a)     button = VG8M_BUTTON_DELTA;
+    else if (key == SDLK_s)     button = VG8M_BUTTON_BETA;
+    else if (key == SDLK_d)     button = VG8M_BUTTON_ALPHA;
+    else if (key == SDLK_UP)    button = VG8M_BUTTON_UP;
+    else if (key == SDLK_DOWN)  button = VG8M_BUTTON_DOWN;
+    else if (key == SDLK_LEFT)  button = VG8M_BUTTON_LEFT;
+    else if (key == SDLK_RIGHT) button = VG8M_BUTTON_RIGHT;
+    vg8m_set_buttons(emu, button, state);
+}
+
+static void _gui_key(VG8M *emu, SDL_Keycode key) {
+    if      (key == SDLK_r) vg8m_reset(emu);
+    else if (key == SDLK_n) should_step = true;
+    else if (key == SDLK_p) {
+        paused = !paused;
+        if (paused) fprintf(stderr, "paused!\n");
+        else        fprintf(stderr, "resuming\n");
+    }
+}
+
+void _debugger_input(VG8M *emu) {
+    SDL_Event event;
+    if (SDL_WaitEvent(&event)) {
+        if (event.type == SDL_QUIT) {
+            running = false;
+        }
+        else if (event.type == SDL_KEYDOWN)
+            _gui_key(emu, event.key.keysym.sym);
+    }
+}
 
 void _input(VG8M *emu, void *_) {
     SDL_Event event;
@@ -32,32 +70,11 @@ void _input(VG8M *emu, void *_) {
         if (event.type == SDL_QUIT) {
             running = false;
         }
-        else if (event.type == SDL_KEYDOWN || event.type == SDL_KEYUP) {
-            if (!event.key.keysym.mod) {
-                VG8MButtonMask button;
-                if      (event.key.keysym.sym == SDLK_q)
-                    button = VG8M_BUTTON_LT;
-                else if (event.key.keysym.sym == SDLK_w)
-                    button = VG8M_BUTTON_GAMMA;
-                else if (event.key.keysym.sym == SDLK_e)
-                    button = VG8M_BUTTON_RT;
-                else if (event.key.keysym.sym == SDLK_a)
-                    button = VG8M_BUTTON_DELTA;
-                else if (event.key.keysym.sym == SDLK_s)
-                    button = VG8M_BUTTON_BETA;
-                else if (event.key.keysym.sym == SDLK_d)
-                    button = VG8M_BUTTON_ALPHA;
-                else if (event.key.keysym.sym == SDLK_UP)
-                    button = VG8M_BUTTON_UP;
-                else if (event.key.keysym.sym == SDLK_DOWN)
-                    button = VG8M_BUTTON_DOWN;
-                else if (event.key.keysym.sym == SDLK_LEFT)
-                    button = VG8M_BUTTON_LEFT;
-                else if (event.key.keysym.sym == SDLK_RIGHT)
-                    button = VG8M_BUTTON_RIGHT;
-                vg8m_set_buttons(emu, button, event.key.state);
-            }
-        }
+        else if (event.type == SDL_KEYDOWN && event.key.keysym.mod & KMOD_CTRL)
+            _gui_key(emu, event.key.keysym.sym);
+        else if ((event.type == SDL_KEYDOWN || event.type == SDL_KEYUP)
+            && event.key.keysym.mod == KMOD_NONE)
+            _emulator_key(emu, event.key.keysym.sym, event.key.state);
     }
 }
 
@@ -93,14 +110,6 @@ void _display(VG8M *emu, void *_) {
     static int dts[FPS_SAMPLES];
     static int dti = 0;
 
-#ifdef USE_TEXTURE
-    SDL_RenderCopy(renderer, screen, NULL, NULL);
-    SDL_RenderPresent(renderer);
-#else
-    SDL_BlitScaled(screen, NULL, window_surface, &window_rect);
-    SDL_UpdateWindowSurface(window);
-#endif // USE_TEXTURE
-
     long t = SDL_GetTicks();
     long dt = t - t_last;
     if (dt < MS_FRAME)
@@ -110,6 +119,14 @@ void _display(VG8M *emu, void *_) {
     // add current frame dt to the sample buffer
     dts[dti] = dt;
     dti = (dti + 1) % FPS_SAMPLES;
+
+#ifdef USE_TEXTURE
+    SDL_RenderCopy(renderer, screen, NULL, NULL);
+    SDL_RenderPresent(renderer);
+#else
+    SDL_BlitScaled(screen, NULL, window_surface, &window_rect);
+    SDL_UpdateWindowSurface(window);
+#endif // USE_TEXTURE
 
     if (dti == 0) {
         // once the buffer rolls over, calculate average & update display
@@ -180,8 +197,22 @@ int main(int argc, char **argv) {
 #endif // USE_TEXTURE
 
     running = true;
+    paused = false;
     while (running) {
-        vg8m_step_instruction(emu);
+        if (paused) {
+            if (should_step) {
+                vg8m_dump_instruction(emu);
+                vg8m_step_instruction(emu);
+                _display(emu, NULL);
+                should_step = false;
+            }
+            else {
+                _debugger_input(emu);
+            }
+        }
+        else {
+            vg8m_step_instruction(emu);
+        }
     }
 
 cleanup:
