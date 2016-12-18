@@ -180,7 +180,7 @@ void scan_txt(VG8M *emu, int y, uint32_t *pixels) {
     uint16_t sy = y - regs->txt_vscroll;
     uint16_t ty = sy >> 3;
 
-    uint16_t name_base = regs->txt_addr + ty * 2 * regs->txt_hsize;
+    uint16_t name_base = regs->txt_addr + ty * regs->txt_hsize;
     uint16_t pat_base = 0x1000;
 
     for (int x = 0; x < VG8M_DISP_WIDTH; ++x) {
