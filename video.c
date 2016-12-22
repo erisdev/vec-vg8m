@@ -65,8 +65,8 @@ static inline uint8_t sample_2bpp(VG8M *emu, uint16_t addr, bool flip_x, bool fl
     if (!flip_x) x = 7 - x;
     if ( flip_y) y = 7 - y;
 
-    uint8_t b0 = vg8m_read8(emu, addr + y);
-    uint8_t b1 = vg8m_read8(emu, addr + y + 1);
+    uint8_t b0 = vg8m_read8(emu, addr + y * 2);
+    uint8_t b1 = vg8m_read8(emu, addr + y * 2 + 1);
 
     return (b0 >> x & 1) | (b1 << 1 >> x & 2);
 }
@@ -75,9 +75,9 @@ static inline uint8_t sample_3bpp(VG8M *emu, uint16_t addr, bool flip_x, bool fl
     if (!flip_x) x = 7 - x;
     if ( flip_y) y = 7 - y;
 
-    uint8_t b0 = vg8m_read8(emu, addr + y);
-    uint8_t b1 = vg8m_read8(emu, addr + y + 1);
-    uint8_t b2 = vg8m_read8(emu, addr + y + 16);
+    uint8_t b0 = vg8m_read8(emu, addr + y * 2);
+    uint8_t b1 = vg8m_read8(emu, addr + y * 2 + 1);
+    uint8_t b2 = vg8m_read8(emu, addr + y     + 16);
 
     return (b0 >> x & 1) | (b1 << 1 >> x & 2) | (b2 << 2 >> x & 4);
 }
