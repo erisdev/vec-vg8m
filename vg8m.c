@@ -13,6 +13,7 @@
 
 #include "vg8m.h"
 #include "video.h"
+#include "internal.h"
 
 static uint8_t *_load_file(uint16_t size, const char *filename);
 static void _unload_file(uint8_t *buffer, uint16_t size);
@@ -23,42 +24,6 @@ static void _writeio(VG8M *emu, uint16_t addr, uint8_t data);
 static uint8_t _readmem(VG8M *emu, uint16_t addr);
 static void _writemem(VG8M *emu, uint16_t addr, uint8_t data);
 
-enum {
-    SYS_ROM_SIZE  = 0x0800,
-    SYS_RAM_SIZE  = 0x0700,
-    HWREGS_SIZE   = sizeof(VG8MRegisters),
-    CHAR_ROM_SIZE = 0x1000,
-    USER_RAM_SIZE = 0x4000,
-    CART_ROM_SIZE = 0x8000,
-};
-
-
-enum {
-    SYS_ROM_ADDR  = 0x0000, SYS_ROM_END  = 0x07FF,
-    SYS_RAM_ADDR  = 0x0800, SYS_RAM_END  = 0x0EFF,
-    HWREGS_ADDR   = 0x0F00, HWREGS_END   = HWREGS_ADDR + HWREGS_SIZE - 1,
-    CHAR_ROM_ADDR = 0x1000, CHAR_ROM_END = 0x1FFF,
-    USER_RAM_ADDR = 0x4000, USER_RAM_END = 0x7FFF,
-    CART_ROM_ADDR = 0x8000, CART_ROM_END = 0xFFFF,
-};
-
-enum {
-    INT_VBLANK = 0x20,
-    INT_HBLANK = 0x22,
-};
-
-enum {
-    MODE_HBLANK,
-    MODE_VBLANK,
-    MODE_DRAW,
-};
-
-enum {
-    CYCLES_HBLANK = 200,
-    CYCLES_VBLANK = 500,
-    CYCLES_DRAW   = 200,
-};
-
 static inline uint16_t _min(uint16_t a, uint16_t b) {
     return a < b ? a : b;
 }
@@ -66,6 +31,9 @@ static inline uint16_t _min(uint16_t a, uint16_t b) {
 void vg8m_init(VG8M *emu) {
     emu->system_ram     = calloc(SYS_RAM_SIZE, sizeof(uint8_t));
     emu->user_ram       = calloc(USER_RAM_SIZE, sizeof(uint8_t));
+    emu->cart_prog_rom  = calloc(CART_ROM_SIZE, sizeof(uint8_t));
+    emu->cart_2bpp_rom  = calloc(CART_2BPP_SIZE, sizeof(uint8_t));
+    emu->cart_3bpp_rom  = calloc(CART_3BPP_SIZE, sizeof(uint8_t));
 
     // memcpy(emu->system_rom,     bios_system_bin,   bios_system_bin_len);
     // memcpy(emu->system_charset, bios_charset_1bpp, bios_charset_1bpp_len);
@@ -90,11 +58,13 @@ void vg8m_fin(VG8M *emu) {
     // free(emu->system_rom);
     free(emu->system_ram);
     free(emu->user_ram);
+    free(emu->cart_prog_rom);
+    free(emu->cart_2bpp_rom);
+    free(emu->cart_3bpp_rom);
     free(emu->cpu);
 
     _unload_file(emu->system_rom, SYS_ROM_SIZE);
     _unload_file(emu->system_charset, CHAR_ROM_SIZE);
-    _unload_file(emu->cartridge_rom, CART_ROM_SIZE);
 }
 
 void vg8m_reset(VG8M *emu) {
@@ -150,21 +120,6 @@ bool vg8m_load_system(VG8M *emu, const char *rom_filename, const char *charset_f
 error:
     _unload_file(rom_buffer, SYS_ROM_SIZE);
     _unload_file(charset_buffer, CHAR_ROM_SIZE);
-    return false;
-}
-
-bool vg8m_load_cart(VG8M *emu, const char *filename) {
-    uint8_t *buffer = NULL;
-
-    buffer = _load_file(CART_ROM_SIZE, filename);
-    if (!buffer)
-        goto error;
-
-    emu->cartridge_rom = buffer;
-
-    return true;
-error:
-    _unload_file(buffer, CART_ROM_SIZE);
     return false;
 }
 
@@ -323,8 +278,8 @@ static uint8_t _readmem(VG8M *emu, uint16_t addr) {
     else if (inregion(addr, USER_RAM_ADDR, USER_RAM_END))
         return emu->user_ram[addr - USER_RAM_ADDR];
 
-    else if (inregion(addr, CART_ROM_ADDR, CART_ROM_END) && emu->cartridge_rom)
-        return emu->cartridge_rom[addr - CART_ROM_ADDR];
+    else if (inregion(addr, CART_ROM_ADDR, CART_ROM_END))
+        return emu->cart_prog_rom[addr - CART_ROM_ADDR];
 
     return 0xFF;
 }

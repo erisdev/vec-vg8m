@@ -1,4 +1,7 @@
 #pragma once
+#include <stdbool.h>
+#include <stdint.h>
+
 #include "z80.h"
 
 typedef struct s_vg8m VG8M;
@@ -36,7 +39,9 @@ struct s_vg8m {
     uint8_t *system_ram;
     uint8_t *system_charset;
     uint8_t *user_ram;
-    uint8_t *cartridge_rom;
+    uint8_t *cart_prog_rom;
+    uint8_t *cart_2bpp_rom;
+    uint8_t *cart_3bpp_rom;
     VG8MRegisters hwregs;
 
     VG8MCallback scanline_callback;
