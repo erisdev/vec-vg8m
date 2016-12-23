@@ -11,6 +11,7 @@ CRT0       = $(VGDEV)/lib/crt0.rel
 CC         = sdcc -mz80
 AS         = sdasz80
 OBJCOPY    = sdobjcopy
+PACKROM    = python $(VGDEV)/tools/packrom.py
 
 CFLAGS     = -I$(VGDEV)/include --debug
 LIBS       =
