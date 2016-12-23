@@ -12,4 +12,7 @@ system.bin : boot.rel system.rel
 charset.1bpp : charset.png
 	$(TILECONV) -f 1bpp $@ $^
 
+tiles.2bpp : logo.png
+	$(TILECONV) -0 -f 2bpp $@ $^
+
 include ../vgdev/make/sdcc-rules.mk
