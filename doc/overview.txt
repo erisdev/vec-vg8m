@@ -1,4 +1,4 @@
-VEC-VG8M - Vidius Electric Corporation Portable Computer
+VIDIUS ORIGIN (VEC-VG8M) - OVERVIEW
 
 ╔═══════════════════════════════════════════════════╗
 ║                   Memory Map                      ║

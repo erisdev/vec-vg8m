@@ -1,4 +1,4 @@
-VEC-VG8M - Vidius Electric Corporation Portable Computer
+VIDIUS ORIGIN (VEC-VG8M) - GRAPHICS
 
 There are eight palettes of eight colors each. The colors are pulled from the
 32-color hardware palette (shamelessly db32). Each color entry is a single byte;

@@ -1,4 +1,4 @@
-# VIDIUS ELECTRIC CORP HANDHELD COMPUTER SYSTEM
+# VEC-VG8M / VIDIUS ORIGIN HANDHELD COMPUTER SYSTEM
 
 an unfinished console emulator from the past's future
 
