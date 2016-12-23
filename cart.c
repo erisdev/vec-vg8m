@@ -33,25 +33,30 @@ struct s_cart_header {
 
 bool vg8m_load_cart(VG8M *emu, const char *filename) {
     DumpHeader header;
+    int len;
+
     int fd = open(filename, O_RDONLY);
     if (fd == -1) goto error;
 
     if (read(fd, &header, sizeof(header)) == -1)
         goto error;
 
-    if (header.prog_size > 0) {
+    len = _min(header.prog_size, CART_ROM_SIZE);
+    if (len > 0) {
         if (lseek(fd, header.prog_offset, SEEK_SET) == -1
-        ||  read(fd, emu->cart_prog_rom, header.prog_size) == -1)
+        ||  read(fd, emu->cart_prog_rom, len) == -1)
             goto error;
     }
 
-    if (header.pat_2bpp_size > 0) {
+    len = _min(header.pat_2bpp_size, CART_ROM_SIZE);
+    if (len > 0) {
         if (lseek(fd, header.pat_2bpp_offset, SEEK_SET) == -1
         ||  read(fd, emu->cart_2bpp_rom, header.pat_2bpp_size) == -1)
             goto error;
     }
 
-    if (header.pat_3bpp_size > 0) {
+    len = _min(header.pat_3bpp_size, CART_ROM_SIZE);
+    if (len > 0) {
         if (lseek(fd, header.pat_3bpp_offset, SEEK_SET) == -1
         ||  read(fd, emu->cart_3bpp_rom, header.pat_3bpp_size) == -1)
             goto error;

@@ -24,10 +24,6 @@ static void _writeio(VG8M *emu, uint16_t addr, uint8_t data);
 static uint8_t _readmem(VG8M *emu, uint16_t addr);
 static void _writemem(VG8M *emu, uint16_t addr, uint8_t data);
 
-static inline uint16_t _min(uint16_t a, uint16_t b) {
-    return a < b ? a : b;
-}
-
 void vg8m_init(VG8M *emu) {
     emu->system_ram     = calloc(SYS_RAM_SIZE, sizeof(uint8_t));
     emu->user_ram       = calloc(USER_RAM_SIZE, sizeof(uint8_t));

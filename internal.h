@@ -39,3 +39,7 @@ enum {
     CYCLES_VBLANK = 500,
     CYCLES_DRAW   = 200,
 };
+
+static inline uint16_t _min(uint16_t a, uint16_t b) {
+    return a < b ? a : b;
+}
