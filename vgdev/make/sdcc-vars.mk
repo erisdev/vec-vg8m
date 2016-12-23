@@ -12,6 +12,7 @@ CC         = sdcc -mz80
 AS         = sdasz80
 OBJCOPY    = sdobjcopy
 PACKROM    = python $(VGDEV)/tools/packrom.py
+TILECONV   = python $(VGDEV)/tools/tileconv.py
 
 CFLAGS     = -I$(VGDEV)/include --debug
 LIBS       =
