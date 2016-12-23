@@ -31,7 +31,7 @@ libz80 :
 
 .PHONY : libz80-clean
 libz80-clean :
-	$(MAKE) -C vendor/libz80
+	$(MAKE) -C vendor/libz80 clean
 
 .PHONY : bios
 bios :
