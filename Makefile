@@ -14,8 +14,8 @@ vg8m : sdl_driver.o vg8m.o cart.o video.o | libz80
 
 cart.o : cart.c vg8m.h
 vg8m.o : vg8m.c vg8m.h
-video.o : video.c video.h vg8m.h
-sdl_driver.o : sdl_driver.c vg8m.h video.h
+video.o : video.c vg8m.h
+sdl_driver.o : sdl_driver.c vg8m.h
 
 .PHONY : clean
 clean :

@@ -74,6 +74,14 @@ enum e_vg8m_button {
     VG8M_BUTTON_RIGHT = 0x0800,
 };
 
+enum {
+    VG8M_DISP_WIDTH = 256,
+    VG8M_DISP_HEIGHT = 256,
+};
+
+const uint32_t *VG8M_HWPALETTE;
+static const int VG8M_HWPALETTE_SIZE = 32;
+
 void vg8m_init(VG8M *emu);
 void vg8m_fin(VG8M *emu);
 
@@ -97,3 +105,5 @@ void vg8m_dump_registers(VG8M *emu, FILE *file);
 
 void vg8m_vblank(VG8M *emu);
 void vg8m_hblank(VG8M *emu);
+
+void vg8m_scanline(VG8M *emu, uint32_t *pixels);

@@ -1,4 +1,5 @@
 #include "config.h"
+#include "internal.h"
 
 #include <fcntl.h>
 #include <memory.h>
@@ -10,10 +11,6 @@
 #else
 #include <unistd.h>
 #endif
-
-#include "vg8m.h"
-#include "video.h"
-#include "internal.h"
 
 static uint8_t *_load_file(uint16_t size, const char *filename);
 static void _unload_file(uint8_t *buffer, uint16_t size);

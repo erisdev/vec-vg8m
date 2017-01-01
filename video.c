@@ -1,8 +1,8 @@
+#include "config.h"
+#include "internal.h"
+
 #include <stdbool.h>
 #include <memory.h>
-
-#include "video.h"
-#include "vg8m.h"
 
 static const uint32_t _colors[] = {
     /* dawnbringer's db32 palette <http://pixeljoint.com/forum/forum_posts.asp?TID=16247> */

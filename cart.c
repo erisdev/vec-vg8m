@@ -1,11 +1,10 @@
 #include "config.h"
+#include "internal.h"
 
 #include <fcntl.h>
 #include <stdlib.h>
 #include <unistd.h>
 
-#include "vg8m.h"
-#include "internal.h"
 
 static const char MAGIC[] = "VGDMP100";
 

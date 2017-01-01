@@ -1,12 +1,10 @@
 #include "config.h"
+#include "vg8m.h"
 
 #include <SDL.h>
 #include <stdbool.h>
 #include <string.h>
 #include <sys/errno.h>
-
-#include "vg8m.h"
-#include "video.h"
 
 static const int MS_FRAME = 1000/30;
 
