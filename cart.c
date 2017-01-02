@@ -37,8 +37,8 @@ struct s_bank_header {
 void origin_cart_init(OriginCart *cart) {
     origin_bank_init(&cart->prog, CART_ROM_SIZE, false);
     origin_bank_init(&cart->ext,  CART_EXT_SIZE, false);
-    origin_bank_init(&cart->bg,   CART_BG_SIZE,  false);
-    origin_bank_init(&cart->spr,  CART_SPR_SIZE, false);
+    origin_bank_init(&cart->bg,   PAT_BG_SIZE,   false);
+    origin_bank_init(&cart->spr,  PAT_SPR_SIZE,  false);
 }
 
 void origin_cart_fin(OriginCart *cart) {

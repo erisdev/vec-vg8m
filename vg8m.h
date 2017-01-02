@@ -82,7 +82,6 @@ struct s_origin {
         struct {
             OriginMemSlot system_rom;
             OriginMemSlot system_ram;
-            OriginMemSlot system_charset;
             OriginMemSlot hwregs;
             OriginMemSlot user_ram;
             OriginMemSlot cart_prog;
@@ -90,6 +89,7 @@ struct s_origin {
         };
     } memory;
 
+    OriginMemSlot pat_txt;
     OriginMemSlot pat_bg;
     OriginMemSlot pat_spr;
 

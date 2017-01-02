@@ -14,13 +14,13 @@ void origin_init(Origin *emu) {
     origin_mem_init_rom(&emu->memory.system_rom,     SYS_ROM_ADDR,  SYS_ROM_SIZE);
     origin_mem_init_ram(&emu->memory.system_ram,     SYS_RAM_ADDR,  SYS_RAM_SIZE);
     origin_mem_init(&emu->memory.hwregs,             HWREGS_ADDR,   HWREGS_SIZE, &emu->hwregs, NULL);
-    origin_mem_init_rom(&emu->memory.system_charset, CHAR_ROM_ADDR, CHAR_ROM_SIZE);
     origin_mem_init_ram(&emu->memory.user_ram,       USER_RAM_ADDR, USER_RAM_SIZE);
     origin_mem_init_banked(&emu->memory.cart_prog,   CART_ROM_ADDR, CART_ROM_SIZE);
     origin_mem_init_banked(&emu->memory.cart_prog,   CART_ROM_ADDR, CART_ROM_SIZE);
 
-    origin_mem_init_banked(&emu->pat_bg,  0, CART_BG_SIZE);
-    origin_mem_init_banked(&emu->pat_spr, 0, CART_SPR_SIZE);
+    origin_mem_init_rom(&emu->pat_txt,    0, PAT_TXT_SIZE);
+    origin_mem_init_banked(&emu->pat_bg,  0, PAT_BG_SIZE);
+    origin_mem_init_banked(&emu->pat_spr, 0, PAT_SPR_SIZE);
 
     emu->cpu = calloc(1, sizeof(Z80Context));
     emu->cpu->ioParam = emu;
@@ -40,11 +40,11 @@ void origin_fin(Origin *emu) {
     origin_mem_fin(&emu->memory.system_rom);
     origin_mem_fin(&emu->memory.system_ram);
     origin_mem_fin(&emu->memory.hwregs);
-    origin_mem_fin(&emu->memory.system_charset);
     origin_mem_fin(&emu->memory.user_ram);
     origin_mem_fin(&emu->memory.cart_prog);
     origin_mem_fin(&emu->memory.cart_ext);
 
+    origin_mem_fin(&emu->pat_txt);
     origin_mem_fin(&emu->pat_bg);
     origin_mem_fin(&emu->pat_spr);
 
@@ -74,7 +74,7 @@ bool origin_load_system(Origin *emu, const char *rom_filename, const char *chars
     if (!_load_file(&emu->memory.system_rom, SYS_ROM_SIZE, rom_filename))
         return false;
 
-    if (!_load_file(&emu->memory.system_charset, CHAR_ROM_SIZE, charset_filename))
+    if (!_load_file(&emu->pat_txt, PAT_TXT_SIZE, charset_filename))
         return false;
 
     return true;

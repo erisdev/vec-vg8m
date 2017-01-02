@@ -52,55 +52,58 @@ struct sprite {
     uint16_t pat_name;
 };
 
-static inline uint8_t sample_1bpp(Origin *emu, uint16_t addr, bool flip_x, bool flip_y, uint8_t x, uint8_t y) {
+static inline uint8_t sample_1bpp(uint8_t *pat, uint16_t addr, bool flip_x, bool flip_y, uint8_t x, uint8_t y) {
     if (!flip_x) x = 7 - x;
     if ( flip_y) y = 7 - y;
 
-    uint8_t b0 = origin_read8(emu, addr + y);
+    uint8_t b0 = pat[addr + y];
 
     return b0 >> x & 1;
 }
 
-static inline uint8_t sample_2bpp(Origin *emu, uint16_t addr, bool flip_x, bool flip_y, uint8_t x, uint8_t y) {
+static inline uint8_t sample_2bpp(uint8_t *pat, uint16_t addr, bool flip_x, bool flip_y, uint8_t x, uint8_t y) {
     if (!flip_x) x = 7 - x;
     if ( flip_y) y = 7 - y;
 
-    uint8_t b0 = origin_read8(emu, addr + y * 2);
-    uint8_t b1 = origin_read8(emu, addr + y * 2 + 1);
+    uint8_t b0 = pat[addr + y * 2];
+    uint8_t b1 = pat[addr + y * 2 + 1];
 
     return (b0 >> x & 1) | (b1 << 1 >> x & 2);
 }
 
-static inline uint8_t sample_3bpp(Origin *emu, uint16_t addr, bool flip_x, bool flip_y, uint8_t x, uint8_t y) {
+static inline uint8_t sample_3bpp(uint8_t *pat, uint16_t addr, bool flip_x, bool flip_y, uint8_t x, uint8_t y) {
     if (!flip_x) x = 7 - x;
     if ( flip_y) y = 7 - y;
 
-    uint8_t b0 = origin_read8(emu, addr + y * 2);
-    uint8_t b1 = origin_read8(emu, addr + y * 2 + 1);
-    uint8_t b2 = origin_read8(emu, addr + y     + 16);
+    uint8_t b0 = pat[addr + y * 2];
+    uint8_t b1 = pat[addr + y * 2 + 1];
+    uint8_t b2 = pat[addr + y     + 16];
 
     return (b0 >> x & 1) | (b1 << 1 >> x & 2) | (b2 << 2 >> x & 4);
 }
 
 static inline void scan_map(Origin *emu, int y, uint32_t *pixels) {
     OriginRegisters *regs = &emu->hwregs;
+    uint8_t *pat = origin_mem_bytes(&emu->pat_bg);
+
+    if (!pat) return;
+
     uint16_t sy = y + regs->map_vscroll;
     uint16_t ty = (sy >> 3) % regs->map_vsize;
 
-    uint16_t name_base = regs->map_name_addr + ty * 2 * regs->map_hsize;
-    uint16_t pat_base = emu->hwregs.map_pat_addr;
+    uint16_t base = regs->map_name_addr + ty * 2 * regs->map_hsize;
 
     for (int x = 0; x < ORIGIN_DISP_WIDTH; ++x) {
         uint16_t sx = x + regs->map_hscroll;
         uint16_t tx = (sx>> 3) % regs->map_hsize;
-        uint16_t name = origin_read16(emu, name_base + tx * 2);
+        uint16_t name = origin_read16(emu, base + tx * 2);
 
         bool flip_x   = name & 0x0800;
         bool flip_y   = name & 0x1000;
-        uint16_t addr = pat_base + (name & 0x3FF) * 16;
+        uint16_t addr = (name & 0x3FF) * 16;
 
         uint8_t p = name >> 13;
-        uint8_t c = sample_2bpp(emu, addr, flip_x, flip_y, sx & 7, sy & 7);
+        uint8_t c = sample_2bpp(pat, addr, flip_x, flip_y, sx & 7, sy & 7);
 
         // pixels[x] = regs->palette[p][c];
         pixels[x] = ORIGIN_HWPALETTE[regs->palette[p][c] & 0x1F];
@@ -109,8 +112,9 @@ static inline void scan_map(Origin *emu, int y, uint32_t *pixels) {
 
 static inline void scan_spr(Origin *emu, int y, uint32_t *pixels) {
     OriginRegisters *regs = &emu->hwregs;
+    uint8_t *pat = origin_mem_bytes(&emu->pat_spr);
 
-    uint16_t pat_base = emu->hwregs.spr_pat_addr;
+    if (!pat) return;
 
     struct sprite sprites[SPRITE_LIMIT];
     int count = 0;
@@ -157,10 +161,10 @@ static inline void scan_spr(Origin *emu, int y, uint32_t *pixels) {
                 uint16_t ty = (sy >> 3) % (spr->vsize >> 3);
                 uint16_t tx = (sx >> 3) % (spr->hsize >> 3);
 
-                uint16_t addr = pat_base + (name + ty * 16 + tx) * 24;
+                uint16_t addr = (name + ty * 16 + tx) * 24;
 
                 uint8_t p = spr->pat_name >> 13;
-                uint8_t c = sample_3bpp(emu, addr, flip_x, flip_y, sx & 7, sy & 7);
+                uint8_t c = sample_3bpp(pat, addr, flip_x, flip_y, sx & 7, sy & 7);
 
                 if (!(sy & 7))
                     (void)0;
@@ -173,6 +177,9 @@ static inline void scan_spr(Origin *emu, int y, uint32_t *pixels) {
 
 void scan_txt(Origin *emu, int y, uint32_t *pixels) {
     OriginRegisters *regs = &emu->hwregs;
+    uint8_t *pat = origin_mem_bytes(&emu->pat_txt);
+
+    if (!pat) return;
 
     if (y <  regs->txt_vscroll) return;
     if (y >= regs->txt_vscroll + regs->txt_vsize * 8) return;
@@ -181,7 +188,6 @@ void scan_txt(Origin *emu, int y, uint32_t *pixels) {
     uint16_t ty = sy >> 3;
 
     uint16_t name_base = regs->txt_addr + ty * regs->txt_hsize;
-    uint16_t pat_base = 0x1000;
 
     for (int x = 0; x < ORIGIN_DISP_WIDTH; ++x) {
         if (x <  regs->txt_hscroll) continue;
@@ -191,9 +197,9 @@ void scan_txt(Origin *emu, int y, uint32_t *pixels) {
         uint16_t tx = sx >> 3;
         uint16_t name = origin_read8(emu, name_base + tx);
 
-        uint16_t addr = pat_base + name * 8;
+        uint16_t addr = name * 8;
 
-        uint8_t c = sample_1bpp(emu, addr, false, false, sx & 7, sy & 7);
+        uint8_t c = sample_1bpp(pat, addr, false, false, sx & 7, sy & 7);
 
         // pixels[x] = regs->palette[p][c];
         if (c) pixels[x] = ORIGIN_HWPALETTE[regs->palette[0][c] & 0x1F];
