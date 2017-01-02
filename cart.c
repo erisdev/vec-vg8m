@@ -43,23 +43,23 @@ bool origin_load_cart(Origin *emu, const char *filename) {
     len = _min(header.prog_size, CART_ROM_SIZE);
     if (len > 0) {
         if (lseek(fd, header.prog_offset, SEEK_SET) == -1
-        ||  read(fd, emu->memory.cart_prog.data, len) == -1)
+        ||  read(fd, origin_mem_bytes(&emu->memory.cart_prog), len) == -1)
             goto error;
     }
 
-    len = _min(header.pat_2bpp_size, CART_ROM_SIZE);
-    if (len > 0) {
-        if (lseek(fd, header.pat_2bpp_offset, SEEK_SET) == -1
-        ||  read(fd, emu->cart_2bpp_rom.data, len) == -1)
-            goto error;
-    }
-
-    len = _min(header.pat_3bpp_size, CART_ROM_SIZE);
-    if (len > 0) {
-        if (lseek(fd, header.pat_3bpp_offset, SEEK_SET) == -1
-        ||  read(fd, emu->cart_3bpp_rom.data, len) == -1)
-            goto error;
-    }
+    // len = _min(header.pat_2bpp_size, CART_ROM_SIZE);
+    // if (len > 0) {
+    //     if (lseek(fd, header.pat_2bpp_offset, SEEK_SET) == -1
+    //     ||  read(fd, emu->cart_2bpp_rom.bytes, len) == -1)
+    //         goto error;
+    // }
+    //
+    // len = _min(header.pat_3bpp_size, CART_ROM_SIZE);
+    // if (len > 0) {
+    //     if (lseek(fd, header.pat_3bpp_offset, SEEK_SET) == -1
+    //     ||  read(fd, emu->cart_3bpp_rom.bytes, len) == -1)
+    //         goto error;
+    // }
 
     close(fd);
     return true;

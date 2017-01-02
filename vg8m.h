@@ -6,13 +6,14 @@
 
 typedef struct s_origin Origin;
 typedef struct s_origin_hwregs OriginRegisters;
-typedef struct s_origin_memory OriginMemory;
+typedef struct s_origin_membank OriginMemBank;
+typedef struct s_origin_memslot OriginMemSlot;
 
 typedef void (*OriginCallback)(Origin *emu, void *param);
 
-typedef uint8_t (*OriginMemRead)(OriginMemory *bank, uint16_t addr);
-typedef void    (*OriginMemWrite)(OriginMemory *bank, uint16_t addr, uint8_t value);
-typedef void    (*OriginMemFree)(OriginMemory *bank);
+typedef uint8_t (*OriginMemRead)(OriginMemSlot *bank, uint16_t addr);
+typedef void    (*OriginMemWrite)(OriginMemSlot *bank, uint16_t addr, uint8_t value);
+typedef void    (*OriginMemFree)(void *data);
 
 struct s_origin_hwregs {
     /* gpu */
@@ -37,36 +38,50 @@ struct s_origin_hwregs {
     uint16_t buttons;
 };
 
-struct s_origin_memory {
-    uint16_t begin;
-    uint16_t end;
+struct s_origin_membank {
     uint16_t size;
+    uint8_t *bytes;
+    bool writable;
+};
 
-    void *data;
-
+struct s_origin_memslot {
     OriginMemRead read;
     OriginMemWrite write;
-    OriginMemFree free;
+
+    uint16_t begin;
+    uint16_t end;
+    bool is_banked;
+
+    union {
+        struct {
+            OriginMemBank *bank;
+        } banked;
+
+        struct {
+            OriginMemFree free;
+
+            uint16_t size;
+            uint8_t *bytes;
+        } fixed;
+    };
 };
 
 struct s_origin {
     Z80Context *cpu;
 
     union {
-        OriginMemory banks[6];
+        OriginMemSlot slots[6];
         struct {
-            OriginMemory system_rom;
-            OriginMemory system_ram;
-            OriginMemory system_charset;
-            OriginMemory hwregs;
-            OriginMemory user_ram;
-            OriginMemory cart_prog;
+            OriginMemSlot system_rom;
+            OriginMemSlot system_ram;
+            OriginMemSlot system_charset;
+            OriginMemSlot hwregs;
+            OriginMemSlot user_ram;
+            OriginMemSlot cart_prog;
         };
     } memory;
 
     OriginRegisters hwregs;
-    OriginMemory cart_2bpp_rom;
-    OriginMemory cart_3bpp_rom;
 
     OriginCallback scanline_callback;
     void *scanline_param;
@@ -134,11 +149,16 @@ void origin_scanline(Origin *emu, uint32_t *pixels);
 
 // MEMORY
 
-void origin_memory_init(OriginMemory *bank, uint16_t addr, uint16_t size, void *data, OriginMemRead read_func, OriginMemWrite write_func, OriginMemFree free_func);
-void origin_memory_fin(OriginMemory *bank);
-void origin_ram_init(OriginMemory *bank, uint16_t begin, uint16_t size);
-void origin_rom_init(OriginMemory *bank, uint16_t begin, uint16_t size);
+void origin_mem_fin(OriginMemSlot *slot);
+uint8_t *origin_mem_bytes(OriginMemSlot *slot);
+uint16_t origin_mem_size(OriginMemSlot *slot);
 
-uint8_t ORIGIN_MEM_READ_DEFAULT(OriginMemory *bank, uint16_t addr);
-void ORIGIN_MEM_WRITE_DEFAULT(OriginMemory *bank, uint16_t addr, uint8_t data);
-static void ORIGIN_MEM_FREE_DEFAULT(OriginMemory *bank);
+void origin_mem_init(OriginMemSlot *slot, uint16_t addr, uint16_t size, void *data, OriginMemFree free_func);
+void origin_mem_init_ram(OriginMemSlot *slot, uint16_t addr, uint16_t size);
+void origin_mem_init_rom(OriginMemSlot *slot, uint16_t addr, uint16_t size);
+void origin_mem_init_banked(OriginMemSlot *slot, uint16_t addr, uint16_t size);
+
+bool origin_mem_set_bank(OriginMemSlot *slot, OriginMemBank *bank);
+
+void origin_bank_init(OriginMemBank *bank, uint16_t size, bool writable);
+void origin_bank_fin(OriginMemBank *bank);

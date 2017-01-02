@@ -11,16 +11,12 @@ static uint8_t _readio(Origin *emu, uint16_t addr);
 static void _writeio(Origin *emu, uint16_t addr, uint8_t data);
 
 void origin_init(Origin *emu) {
-    origin_rom_init(&emu->memory.system_rom,     SYS_ROM_ADDR,  SYS_ROM_SIZE);
-    origin_ram_init(&emu->memory.system_ram,     SYS_RAM_ADDR,  SYS_RAM_SIZE);
-    origin_rom_init(&emu->memory.system_charset, CHAR_ROM_ADDR, CHAR_ROM_SIZE);
-    origin_ram_init(&emu->memory.user_ram,       USER_RAM_ADDR, USER_RAM_SIZE);
-    origin_rom_init(&emu->memory.cart_prog,      CART_ROM_ADDR, CART_ROM_SIZE);
-    origin_rom_init(&emu->cart_2bpp_rom,         0,             CART_2BPP_SIZE);
-    origin_rom_init(&emu->cart_3bpp_rom,         0,             CART_3BPP_SIZE);
-
-    origin_memory_init(&emu->memory.hwregs, HWREGS_ADDR, HWREGS_SIZE,
-        &emu->hwregs, ORIGIN_MEM_READ_DEFAULT, ORIGIN_MEM_WRITE_DEFAULT, NULL);
+    origin_mem_init_rom(&emu->memory.system_rom,     SYS_ROM_ADDR,  SYS_ROM_SIZE);
+    origin_mem_init_ram(&emu->memory.system_ram,     SYS_RAM_ADDR,  SYS_RAM_SIZE);
+    origin_mem_init(&emu->memory.hwregs,             HWREGS_ADDR,   HWREGS_SIZE, &emu->hwregs, NULL);
+    origin_mem_init_rom(&emu->memory.system_charset, CHAR_ROM_ADDR, CHAR_ROM_SIZE);
+    origin_mem_init_ram(&emu->memory.user_ram,       USER_RAM_ADDR, USER_RAM_SIZE);
+    origin_mem_init_rom(&emu->memory.cart_prog,      CART_ROM_ADDR, CART_ROM_SIZE);
 
     emu->cpu = calloc(1, sizeof(Z80Context));
     emu->cpu->ioParam = emu;
@@ -37,12 +33,12 @@ void origin_init(Origin *emu) {
 }
 
 void origin_fin(Origin *emu) {
-    origin_memory_fin(&emu->memory.system_rom);
-    origin_memory_fin(&emu->memory.system_ram);
-    origin_memory_fin(&emu->memory.user_ram);
-    origin_memory_fin(&emu->memory.cart_prog);
-    origin_memory_fin(&emu->cart_2bpp_rom);
-    origin_memory_fin(&emu->cart_3bpp_rom);
+    origin_mem_fin(&emu->memory.system_rom);
+    origin_mem_fin(&emu->memory.system_ram);
+    origin_mem_fin(&emu->memory.hwregs);
+    origin_mem_fin(&emu->memory.system_charset);
+    origin_mem_fin(&emu->memory.user_ram);
+    origin_mem_fin(&emu->memory.cart_prog);
 
     free(emu->cpu);
 }
@@ -51,12 +47,12 @@ void origin_reset(Origin *emu) {
     Z80NMI(emu->cpu);
 }
 
-static bool _load_file(uint8_t *buffer, uint16_t size, const char *filename) {
+static bool _load_file(OriginMemSlot *slot, uint16_t size, const char *filename) {
     int fd = open(filename, O_RDONLY);
     if (fd == -1)
         goto error;
 
-    if (read(fd, buffer, size) == -1)
+    if (read(fd, origin_mem_bytes(slot), size) == -1)
         goto error;
 
     close(fd);
@@ -67,10 +63,10 @@ error:
 }
 
 bool origin_load_system(Origin *emu, const char *rom_filename, const char *charset_filename) {
-    if (!_load_file(emu->memory.system_rom.data, SYS_ROM_SIZE, rom_filename))
+    if (!_load_file(&emu->memory.system_rom, SYS_ROM_SIZE, rom_filename))
         return false;
 
-    if (!_load_file(emu->memory.system_charset.data, CHAR_ROM_SIZE, charset_filename))
+    if (!_load_file(&emu->memory.system_charset, CHAR_ROM_SIZE, charset_filename))
         return false;
 
     return true;
