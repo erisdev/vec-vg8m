@@ -30,7 +30,7 @@ struct s_cart_header {
     uint8_t version;
 };
 
-bool vg8m_load_cart(VG8M *emu, const char *filename) {
+bool origin_load_cart(Origin *emu, const char *filename) {
     DumpHeader header;
     int len;
 

@@ -4,7 +4,7 @@
 enum {
     SYS_ROM_SIZE  = 0x0800,
     SYS_RAM_SIZE  = 0x0700,
-    HWREGS_SIZE   = sizeof(VG8MRegisters),
+    HWREGS_SIZE   = sizeof(OriginRegisters),
     CHAR_ROM_SIZE = 0x1000,
     USER_RAM_SIZE = 0x4000,
     CART_ROM_SIZE = 0x8000,

@@ -7,20 +7,20 @@
 #include <stdlib.h>
 #include <unistd.h>
 
-static uint8_t _readio(VG8M *emu, uint16_t addr);
-static void _writeio(VG8M *emu, uint16_t addr, uint8_t data);
+static uint8_t _readio(Origin *emu, uint16_t addr);
+static void _writeio(Origin *emu, uint16_t addr, uint8_t data);
 
-void vg8m_init(VG8M *emu) {
-    vg8m_rom_init(&emu->memory.system_rom,     SYS_ROM_ADDR,  SYS_ROM_SIZE);
-    vg8m_ram_init(&emu->memory.system_ram,     SYS_RAM_ADDR,  SYS_RAM_SIZE);
-    vg8m_rom_init(&emu->memory.system_charset, CHAR_ROM_ADDR, CHAR_ROM_SIZE);
-    vg8m_ram_init(&emu->memory.user_ram,       USER_RAM_ADDR, USER_RAM_SIZE);
-    vg8m_rom_init(&emu->memory.cart_prog,      CART_ROM_ADDR, CART_ROM_SIZE);
-    vg8m_rom_init(&emu->cart_2bpp_rom,         0,             CART_2BPP_SIZE);
-    vg8m_rom_init(&emu->cart_3bpp_rom,         0,             CART_3BPP_SIZE);
+void origin_init(Origin *emu) {
+    origin_rom_init(&emu->memory.system_rom,     SYS_ROM_ADDR,  SYS_ROM_SIZE);
+    origin_ram_init(&emu->memory.system_ram,     SYS_RAM_ADDR,  SYS_RAM_SIZE);
+    origin_rom_init(&emu->memory.system_charset, CHAR_ROM_ADDR, CHAR_ROM_SIZE);
+    origin_ram_init(&emu->memory.user_ram,       USER_RAM_ADDR, USER_RAM_SIZE);
+    origin_rom_init(&emu->memory.cart_prog,      CART_ROM_ADDR, CART_ROM_SIZE);
+    origin_rom_init(&emu->cart_2bpp_rom,         0,             CART_2BPP_SIZE);
+    origin_rom_init(&emu->cart_3bpp_rom,         0,             CART_3BPP_SIZE);
 
-    vg8m_memory_init(&emu->memory.hwregs, HWREGS_ADDR, HWREGS_SIZE,
-        &emu->hwregs, VG8M_MEM_READ_DEFAULT, VG8M_MEM_WRITE_DEFAULT, NULL);
+    origin_memory_init(&emu->memory.hwregs, HWREGS_ADDR, HWREGS_SIZE,
+        &emu->hwregs, ORIGIN_MEM_READ_DEFAULT, ORIGIN_MEM_WRITE_DEFAULT, NULL);
 
     emu->cpu = calloc(1, sizeof(Z80Context));
     emu->cpu->ioParam = emu;
@@ -28,26 +28,26 @@ void vg8m_init(VG8M *emu) {
     emu->cpu->ioWrite = (Z80DataOut)_writeio;
 
     emu->cpu->memParam = emu;
-    emu->cpu->memRead = (Z80DataIn)vg8m_read8;
-    emu->cpu->memWrite = (Z80DataOut)vg8m_write8;
+    emu->cpu->memRead = (Z80DataIn)origin_read8;
+    emu->cpu->memWrite = (Z80DataOut)origin_write8;
 
     emu->mode = MODE_HBLANK;
     emu->modeclock = 0;
     emu->line = 0;
 }
 
-void vg8m_fin(VG8M *emu) {
-    vg8m_memory_fin(&emu->memory.system_rom);
-    vg8m_memory_fin(&emu->memory.system_ram);
-    vg8m_memory_fin(&emu->memory.user_ram);
-    vg8m_memory_fin(&emu->memory.cart_prog);
-    vg8m_memory_fin(&emu->cart_2bpp_rom);
-    vg8m_memory_fin(&emu->cart_3bpp_rom);
+void origin_fin(Origin *emu) {
+    origin_memory_fin(&emu->memory.system_rom);
+    origin_memory_fin(&emu->memory.system_ram);
+    origin_memory_fin(&emu->memory.user_ram);
+    origin_memory_fin(&emu->memory.cart_prog);
+    origin_memory_fin(&emu->cart_2bpp_rom);
+    origin_memory_fin(&emu->cart_3bpp_rom);
 
     free(emu->cpu);
 }
 
-void vg8m_reset(VG8M *emu) {
+void origin_reset(Origin *emu) {
     Z80NMI(emu->cpu);
 }
 
@@ -66,7 +66,7 @@ error:
     return false;
 }
 
-bool vg8m_load_system(VG8M *emu, const char *rom_filename, const char *charset_filename) {
+bool origin_load_system(Origin *emu, const char *rom_filename, const char *charset_filename) {
     if (!_load_file(emu->memory.system_rom.data, SYS_ROM_SIZE, rom_filename))
         return false;
 
@@ -76,16 +76,16 @@ bool vg8m_load_system(VG8M *emu, const char *rom_filename, const char *charset_f
     return true;
 }
 
-void vg8m_set_buttons(VG8M *emu, VG8MButtonMask buttons, bool pressed) {
+void origin_set_buttons(Origin *emu, OriginButtonMask buttons, bool pressed) {
     if (pressed)
         emu->hwregs.buttons |= buttons;
     else
         emu->hwregs.buttons &= ~buttons;
 }
 
-void vg8m_step_frame(VG8M *emu) {
+void origin_step_frame(Origin *emu) {
     for (;;) {
-        vg8m_step_instruction(emu);
+        origin_step_instruction(emu);
 
         // this is a hacky check to see if the screen has been drawn
         if (emu->mode == MODE_VBLANK && emu->modeclock == 0)
@@ -93,7 +93,7 @@ void vg8m_step_frame(VG8M *emu) {
     }
 }
 
-void vg8m_step_instruction(VG8M *emu) {
+void origin_step_instruction(Origin *emu) {
     Z80Execute(emu->cpu);
 
     emu->modeclock += emu->cpu->tstates;
@@ -105,7 +105,7 @@ void vg8m_step_instruction(VG8M *emu) {
             emu->modeclock = 0;
             ++emu->line;
 
-            if (emu->line == VG8M_DISP_HEIGHT) {
+            if (emu->line == ORIGIN_DISP_HEIGHT) {
                 emu->mode = MODE_VBLANK;
 
                 if (emu->display_callback)
@@ -114,7 +114,7 @@ void vg8m_step_instruction(VG8M *emu) {
                 if (emu->input_callback)
                     emu->input_callback(emu, emu->input_param);
 
-                vg8m_vblank(emu);
+                origin_vblank(emu);
             }
             else {
                 emu->mode = MODE_DRAW;
@@ -126,7 +126,7 @@ void vg8m_step_instruction(VG8M *emu) {
             emu->modeclock = 0;
             ++emu->line;
 
-            if (emu->line == (int)(VG8M_DISP_HEIGHT * 3 / 2)) {
+            if (emu->line == (int)(ORIGIN_DISP_HEIGHT * 3 / 2)) {
                 emu->mode = MODE_HBLANK;
                 emu->line = 0;
             }
@@ -140,19 +140,19 @@ void vg8m_step_instruction(VG8M *emu) {
             if (emu->scanline_callback)
                 emu->scanline_callback(emu, emu->scanline_param);
 
-            vg8m_hblank(emu);
+            origin_hblank(emu);
         }
     }
 }
 
-void vg8m_dump_instruction(VG8M* emu, FILE *file) {
+void origin_dump_instruction(Origin* emu, FILE *file) {
     char hexbuffer[256];
     char asmbuffer[256];
     Z80Debug(emu->cpu, hexbuffer, asmbuffer);
     fprintf(file, "%-8s; %s\n", hexbuffer, asmbuffer);
 }
 
-void vg8m_dump_registers(VG8M *emu, FILE *file) {
+void origin_dump_registers(Origin *emu, FILE *file) {
     Z80Context *cpu = emu->cpu;
     Z80Regs regs = cpu->R1;
     uint8_t flags = regs.br.F;
@@ -175,19 +175,19 @@ void vg8m_dump_registers(VG8M *emu, FILE *file) {
     fprintf(file, "\n");
 }
 
-void vg8m_vblank(VG8M *emu) {
+void origin_vblank(Origin *emu) {
     Z80INT(emu->cpu, INT_VBLANK);
 }
 
-void vg8m_hblank(VG8M *emu) {
+void origin_hblank(Origin *emu) {
     Z80INT(emu->cpu, INT_HBLANK);
 }
 
-static uint8_t _readio(VG8M *emu, uint16_t addr) {
+static uint8_t _readio(Origin *emu, uint16_t addr) {
     return 0xFF;
 }
 
-static void _writeio(VG8M *emu, uint16_t addr, uint8_t data) {
+static void _writeio(Origin *emu, uint16_t addr, uint8_t data) {
     if ((addr & 0xFF) == 0xFF) {
         putc(data, stderr);
     }

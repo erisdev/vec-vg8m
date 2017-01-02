@@ -4,17 +4,17 @@
 
 #include "z80.h"
 
-typedef struct s_vg8m VG8M;
-typedef struct s_vg8m_hwregs VG8MRegisters;
-typedef struct s_vg8m_memory VG8MMemory;
+typedef struct s_origin Origin;
+typedef struct s_origin_hwregs OriginRegisters;
+typedef struct s_origin_memory OriginMemory;
 
-typedef void (*VG8MCallback)(VG8M *emu, void *param);
+typedef void (*OriginCallback)(Origin *emu, void *param);
 
-typedef uint8_t (*VG8MMemRead)(VG8MMemory *bank, uint16_t addr);
-typedef void    (*VG8MMemWrite)(VG8MMemory *bank, uint16_t addr, uint8_t value);
-typedef void    (*VG8MMemFree)(VG8MMemory *bank);
+typedef uint8_t (*OriginMemRead)(OriginMemory *bank, uint16_t addr);
+typedef void    (*OriginMemWrite)(OriginMemory *bank, uint16_t addr, uint8_t value);
+typedef void    (*OriginMemFree)(OriginMemory *bank);
 
-struct s_vg8m_hwregs {
+struct s_origin_hwregs {
     /* gpu */
     uint8_t  palette[8][8];
     uint16_t map_name_addr;
@@ -37,44 +37,44 @@ struct s_vg8m_hwregs {
     uint16_t buttons;
 };
 
-struct s_vg8m_memory {
+struct s_origin_memory {
     uint16_t begin;
     uint16_t end;
     uint16_t size;
 
     void *data;
 
-    VG8MMemRead read;
-    VG8MMemWrite write;
-    VG8MMemFree free;
+    OriginMemRead read;
+    OriginMemWrite write;
+    OriginMemFree free;
 };
 
-struct s_vg8m {
+struct s_origin {
     Z80Context *cpu;
 
     union {
-        VG8MMemory banks[6];
+        OriginMemory banks[6];
         struct {
-            VG8MMemory system_rom;
-            VG8MMemory system_ram;
-            VG8MMemory system_charset;
-            VG8MMemory hwregs;
-            VG8MMemory user_ram;
-            VG8MMemory cart_prog;
+            OriginMemory system_rom;
+            OriginMemory system_ram;
+            OriginMemory system_charset;
+            OriginMemory hwregs;
+            OriginMemory user_ram;
+            OriginMemory cart_prog;
         };
     } memory;
 
-    VG8MRegisters hwregs;
-    VG8MMemory cart_2bpp_rom;
-    VG8MMemory cart_3bpp_rom;
+    OriginRegisters hwregs;
+    OriginMemory cart_2bpp_rom;
+    OriginMemory cart_3bpp_rom;
 
-    VG8MCallback scanline_callback;
+    OriginCallback scanline_callback;
     void *scanline_param;
 
-    VG8MCallback display_callback;
+    OriginCallback display_callback;
     void *display_param;
 
-    VG8MCallback input_callback;
+    OriginCallback input_callback;
     void *input_param;
 
     int mode;
@@ -82,63 +82,63 @@ struct s_vg8m {
     int line;
 };
 
-typedef uint16_t VG8MButtonMask;
+typedef uint16_t OriginButtonMask;
 enum e_vg8m_button {
-    VG8M_BUTTON_ALPHA = 0x0001,
-    VG8M_BUTTON_BETA  = 0x0002,
-    VG8M_BUTTON_GAMMA = 0x0004,
-    VG8M_BUTTON_DELTA = 0x0008,
+    ORIGIN_BUTTON_ALPHA = 0x0001,
+    ORIGIN_BUTTON_BETA  = 0x0002,
+    ORIGIN_BUTTON_GAMMA = 0x0004,
+    ORIGIN_BUTTON_DELTA = 0x0008,
 
-    VG8M_BUTTON_LT    = 0x0010,
-    VG8M_BUTTON_RT    = 0x0020,
+    ORIGIN_BUTTON_LT    = 0x0010,
+    ORIGIN_BUTTON_RT    = 0x0020,
 
-    VG8M_BUTTON_UP    = 0x0100,
-    VG8M_BUTTON_DOWN  = 0x0200,
-    VG8M_BUTTON_LEFT  = 0x0400,
-    VG8M_BUTTON_RIGHT = 0x0800,
+    ORIGIN_BUTTON_UP    = 0x0100,
+    ORIGIN_BUTTON_DOWN  = 0x0200,
+    ORIGIN_BUTTON_LEFT  = 0x0400,
+    ORIGIN_BUTTON_RIGHT = 0x0800,
 };
 
 enum {
-    VG8M_DISP_WIDTH = 256,
-    VG8M_DISP_HEIGHT = 256,
+    ORIGIN_DISP_WIDTH = 256,
+    ORIGIN_DISP_HEIGHT = 256,
 };
 
-const uint32_t *VG8M_HWPALETTE;
-static const int VG8M_HWPALETTE_SIZE = 32;
+const uint32_t *ORIGIN_HWPALETTE;
+static const int ORIGIN_HWPALETTE_SIZE = 32;
 
-void vg8m_init(VG8M *emu);
-void vg8m_fin(VG8M *emu);
+void origin_init(Origin *emu);
+void origin_fin(Origin *emu);
 
-void vg8m_reset(VG8M *emu);
+void origin_reset(Origin *emu);
 
-bool vg8m_load_system(VG8M *emu, const char *rom_filename, const char *charset_filename);
-bool vg8m_load_cart(VG8M *emu, const char *filename);
+bool origin_load_system(Origin *emu, const char *rom_filename, const char *charset_filename);
+bool origin_load_cart(Origin *emu, const char *filename);
 
-void vg8m_set_buttons(VG8M *emu, VG8MButtonMask buttons, bool pressed);
+void origin_set_buttons(Origin *emu, OriginButtonMask buttons, bool pressed);
 
-uint8_t  vg8m_read8(VG8M *emu, uint16_t addr);
-void     vg8m_write8(VG8M *emu, uint16_t addr, uint8_t data);
-uint16_t vg8m_read16(VG8M *emu, uint16_t addr);
-void     vg8m_write16(VG8M *emu, uint16_t addr, uint16_t data);
+uint8_t  origin_read8(Origin *emu, uint16_t addr);
+void     origin_write8(Origin *emu, uint16_t addr, uint8_t data);
+uint16_t origin_read16(Origin *emu, uint16_t addr);
+void     origin_write16(Origin *emu, uint16_t addr, uint16_t data);
 
-void vg8m_step_frame(VG8M *emu);
-void vg8m_step_instruction(VG8M *emu);
+void origin_step_frame(Origin *emu);
+void origin_step_instruction(Origin *emu);
 
-void vg8m_dump_instruction(VG8M* emu, FILE *file);
-void vg8m_dump_registers(VG8M *emu, FILE *file);
+void origin_dump_instruction(Origin* emu, FILE *file);
+void origin_dump_registers(Origin *emu, FILE *file);
 
-void vg8m_vblank(VG8M *emu);
-void vg8m_hblank(VG8M *emu);
+void origin_vblank(Origin *emu);
+void origin_hblank(Origin *emu);
 
-void vg8m_scanline(VG8M *emu, uint32_t *pixels);
+void origin_scanline(Origin *emu, uint32_t *pixels);
 
 // MEMORY
 
-void vg8m_memory_init(VG8MMemory *bank, uint16_t addr, uint16_t size, void *data, VG8MMemRead read_func, VG8MMemWrite write_func, VG8MMemFree free_func);
-void vg8m_memory_fin(VG8MMemory *bank);
-void vg8m_ram_init(VG8MMemory *bank, uint16_t begin, uint16_t size);
-void vg8m_rom_init(VG8MMemory *bank, uint16_t begin, uint16_t size);
+void origin_memory_init(OriginMemory *bank, uint16_t addr, uint16_t size, void *data, OriginMemRead read_func, OriginMemWrite write_func, OriginMemFree free_func);
+void origin_memory_fin(OriginMemory *bank);
+void origin_ram_init(OriginMemory *bank, uint16_t begin, uint16_t size);
+void origin_rom_init(OriginMemory *bank, uint16_t begin, uint16_t size);
 
-uint8_t VG8M_MEM_READ_DEFAULT(VG8MMemory *bank, uint16_t addr);
-void VG8M_MEM_WRITE_DEFAULT(VG8MMemory *bank, uint16_t addr, uint8_t data);
-static void VG8M_MEM_FREE_DEFAULT(VG8MMemory *bank);
+uint8_t ORIGIN_MEM_READ_DEFAULT(OriginMemory *bank, uint16_t addr);
+void ORIGIN_MEM_WRITE_DEFAULT(OriginMemory *bank, uint16_t addr, uint8_t data);
+static void ORIGIN_MEM_FREE_DEFAULT(OriginMemory *bank);

@@ -8,7 +8,7 @@
 
 static const int MS_FRAME = 1000/30;
 
-static VG8M *emu = NULL;
+static Origin *emu = NULL;
 
 static SDL_Window *window = NULL;
 static SDL_Rect window_rect;
@@ -26,23 +26,23 @@ static bool running;
 static bool paused;
 static bool should_step;
 
-static void _emulator_key(VG8M *emu, SDL_Keycode key, bool state) {
-    VG8MButtonMask button;
-    if      (key == SDLK_q)     button = VG8M_BUTTON_LT;
-    else if (key == SDLK_w)     button = VG8M_BUTTON_GAMMA;
-    else if (key == SDLK_e)     button = VG8M_BUTTON_RT;
-    else if (key == SDLK_a)     button = VG8M_BUTTON_DELTA;
-    else if (key == SDLK_s)     button = VG8M_BUTTON_BETA;
-    else if (key == SDLK_d)     button = VG8M_BUTTON_ALPHA;
-    else if (key == SDLK_UP)    button = VG8M_BUTTON_UP;
-    else if (key == SDLK_DOWN)  button = VG8M_BUTTON_DOWN;
-    else if (key == SDLK_LEFT)  button = VG8M_BUTTON_LEFT;
-    else if (key == SDLK_RIGHT) button = VG8M_BUTTON_RIGHT;
-    vg8m_set_buttons(emu, button, state);
+static void _emulator_key(Origin *emu, SDL_Keycode key, bool state) {
+    OriginButtonMask button;
+    if      (key == SDLK_q)     button = ORIGIN_BUTTON_LT;
+    else if (key == SDLK_w)     button = ORIGIN_BUTTON_GAMMA;
+    else if (key == SDLK_e)     button = ORIGIN_BUTTON_RT;
+    else if (key == SDLK_a)     button = ORIGIN_BUTTON_DELTA;
+    else if (key == SDLK_s)     button = ORIGIN_BUTTON_BETA;
+    else if (key == SDLK_d)     button = ORIGIN_BUTTON_ALPHA;
+    else if (key == SDLK_UP)    button = ORIGIN_BUTTON_UP;
+    else if (key == SDLK_DOWN)  button = ORIGIN_BUTTON_DOWN;
+    else if (key == SDLK_LEFT)  button = ORIGIN_BUTTON_LEFT;
+    else if (key == SDLK_RIGHT) button = ORIGIN_BUTTON_RIGHT;
+    origin_set_buttons(emu, button, state);
 }
 
-static void _gui_key(VG8M *emu, SDL_Keycode key) {
-    if      (key == SDLK_r) vg8m_reset(emu);
+static void _gui_key(Origin *emu, SDL_Keycode key) {
+    if      (key == SDLK_r) origin_reset(emu);
     else if (key == SDLK_n) should_step = true;
     else if (key == SDLK_p) {
         paused = !paused;
@@ -51,7 +51,7 @@ static void _gui_key(VG8M *emu, SDL_Keycode key) {
     }
 }
 
-void _debugger_input(VG8M *emu) {
+void _debugger_input(Origin *emu) {
     SDL_Event event;
     if (SDL_WaitEvent(&event)) {
         if (event.type == SDL_QUIT) {
@@ -62,7 +62,7 @@ void _debugger_input(VG8M *emu) {
     }
 }
 
-void _input(VG8M *emu, void *_) {
+void _input(Origin *emu, void *_) {
     SDL_Event event;
     while (SDL_PollEvent(&event)) {
         if (event.type == SDL_QUIT) {
@@ -76,24 +76,24 @@ void _input(VG8M *emu, void *_) {
     }
 }
 
-void _scanline(VG8M *emu, void *_) {
+void _scanline(Origin *emu, void *_) {
 #ifdef USE_TEXTURE
     SDL_Rect scanline_rect;
     scanline_rect.x = 0;
     scanline_rect.y = emu->line;
-    scanline_rect.w = VG8M_DISP_WIDTH;
-    scanline_rect.h = VG8M_DISP_HEIGHT;
+    scanline_rect.w = ORIGIN_DISP_WIDTH;
+    scanline_rect.h = ORIGIN_DISP_HEIGHT;
 
     void *pixels;
     int pitch;
 
     if (SDL_LockTexture(screen, &scanline_rect, &pixels, &pitch) != 0)
         fputs(SDL_GetError(), stderr);
-    vg8m_scanline(emu, pixels);
+    origin_scanline(emu, pixels);
     SDL_UnlockTexture(screen);
 #else
     SDL_LockSurface(screen);
-    vg8m_scanline(emu, (uint32_t*)(screen->pixels) + emu->line * VG8M_DISP_WIDTH);
+    origin_scanline(emu, (uint32_t*)(screen->pixels) + emu->line * ORIGIN_DISP_WIDTH);
     SDL_UnlockSurface(screen);
 #endif // USE_TEXTURE
 
@@ -102,7 +102,7 @@ void _scanline(VG8M *emu, void *_) {
     // SDL_UpdateWindowSurface(window);
 }
 
-void _display(VG8M *emu, void *_) {
+void _display(Origin *emu, void *_) {
     static const int FPS_SAMPLES = 15;
     static int t_last = 0;
     static int dts[FPS_SAMPLES];
@@ -142,13 +142,13 @@ void _display(VG8M *emu, void *_) {
 int main(int argc, char **argv) {
     int status = 0;
 
-    emu = calloc(1, sizeof(VG8M));
-    vg8m_init(emu);
+    emu = calloc(1, sizeof(Origin));
+    origin_init(emu);
 
-    if (!vg8m_load_system(emu, "bios/system.bin", "bios/charset.1bpp"))
+    if (!origin_load_system(emu, "bios/system.bin", "bios/charset.1bpp"))
         goto other_error;
 
-    if (argc > 1 && !vg8m_load_cart(emu, argv[1]))
+    if (argc > 1 && !origin_load_cart(emu, argv[1]))
         goto other_error;
 
     emu->display_callback  = _display;
@@ -160,7 +160,7 @@ int main(int argc, char **argv) {
 
     window = SDL_CreateWindow("VEC-VG8M",
         SDL_WINDOWPOS_UNDEFINED, SDL_WINDOWPOS_UNDEFINED,
-        2 * VG8M_DISP_WIDTH, 2 * VG8M_DISP_HEIGHT, SDL_WINDOW_SHOWN);
+        2 * ORIGIN_DISP_WIDTH, 2 * ORIGIN_DISP_HEIGHT, SDL_WINDOW_SHOWN);
     if (!window)
         goto sdl_error;
 
@@ -171,7 +171,7 @@ int main(int argc, char **argv) {
         goto sdl_error;
 
     screen = SDL_CreateTexture(renderer, SDL_PIXELFORMAT_ARGB32,
-        SDL_TEXTUREACCESS_STREAMING, VG8M_DISP_WIDTH, VG8M_DISP_HEIGHT);
+        SDL_TEXTUREACCESS_STREAMING, ORIGIN_DISP_WIDTH, ORIGIN_DISP_HEIGHT);
     if (!screen)
         goto sdl_error;
 #else
@@ -189,7 +189,7 @@ int main(int argc, char **argv) {
     window_rect.h = window_surface->h;
 
     screen = SDL_CreateRGBSurfaceWithFormat(0,
-        VG8M_DISP_WIDTH, VG8M_DISP_HEIGHT, 8, SDL_PIXELFORMAT_ARGB8888);
+        ORIGIN_DISP_WIDTH, ORIGIN_DISP_HEIGHT, 8, SDL_PIXELFORMAT_ARGB8888);
     if (!screen)
         goto sdl_error;
 #endif // USE_TEXTURE
@@ -199,9 +199,9 @@ int main(int argc, char **argv) {
     while (running) {
         if (paused) {
             if (should_step) {
-                vg8m_dump_instruction(emu, stderr);
-                vg8m_step_instruction(emu);
-                vg8m_dump_registers(emu, stderr);
+                origin_dump_instruction(emu, stderr);
+                origin_step_instruction(emu);
+                origin_dump_registers(emu, stderr);
                 _display(emu, NULL);
                 should_step = false;
             }
@@ -210,13 +210,13 @@ int main(int argc, char **argv) {
             }
         }
         else {
-            vg8m_step_instruction(emu);
+            origin_step_instruction(emu);
         }
     }
 
 cleanup:
     if (emu) {
-        vg8m_fin(emu);
+        origin_fin(emu);
         free(emu);
     }
 
