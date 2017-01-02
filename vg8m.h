@@ -8,6 +8,7 @@ typedef struct s_origin Origin;
 typedef struct s_origin_hwregs OriginRegisters;
 typedef struct s_origin_membank OriginMemBank;
 typedef struct s_origin_memslot OriginMemSlot;
+typedef struct s_origin_cart_bank OriginCartBank;
 typedef struct s_origin_cartridge OriginCart;
 
 typedef void (*OriginCallback)(Origin *emu, void *param);
@@ -67,11 +68,16 @@ struct s_origin_memslot {
     };
 };
 
+struct s_origin_cart_bank {
+    uint8_t slot;
+    uint8_t id;
+    OriginMemBank bank;
+};
+
 struct s_origin_cartridge {
-    OriginMemBank prog;
-    OriginMemBank ext;
-    OriginMemBank bg;
-    OriginMemBank spr;
+    OriginCartBank *banks;
+    int num_banks;
+    int capacity;
 };
 
 struct s_origin {
@@ -141,7 +147,7 @@ void origin_fin(Origin *emu);
 
 void origin_reset(Origin *emu);
 
-bool origin_load_system(Origin *emu, const char *rom_filename, const char *charset_filename);
+bool origin_load_system(Origin *emu, const char *system_filename, const char *bios_filename, const char *charset_filename);
 
 void origin_set_buttons(Origin *emu, OriginButtonMask buttons, bool pressed);
 

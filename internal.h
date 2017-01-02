@@ -15,6 +15,16 @@ enum {
 };
 
 enum {
+    BANK_SLOT_PROG = 0x00,
+    BANK_SLOT_EXT  = 0x01,
+    BANK_SLOT_BG   = 0x02,
+    BANK_SLOT_SPR  = 0x03,
+
+    BANK_SLOT_BIOS = 0xF0,
+    BANK_SLOT_TXT  = 0xF1,
+};
+
+enum {
     INT_VBLANK = 0x20,
     INT_HBLANK = 0x22,
 };
@@ -30,6 +40,8 @@ enum {
     CYCLES_VBLANK = 500,
     CYCLES_DRAW   = 200,
 };
+
+OriginMemBank *origin_cart_bank(OriginCart *cart, uint8_t slot, uint8_t id);
 
 void origin_set_error(const char *fmt, ...) __attribute__ ((format (printf, 1, 2)));
 
