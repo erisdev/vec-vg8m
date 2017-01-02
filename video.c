@@ -52,39 +52,39 @@ struct sprite {
     uint16_t pat_name;
 };
 
-static inline uint8_t sample_1bpp(uint8_t *pat, uint16_t addr, bool flip_x, bool flip_y, uint8_t x, uint8_t y) {
+static inline uint8_t sample_1bpp(OriginMemSlot *pat, uint16_t addr, bool flip_x, bool flip_y, uint8_t x, uint8_t y) {
     if (!flip_x) x = 7 - x;
     if ( flip_y) y = 7 - y;
 
-    uint8_t b0 = pat[addr + y];
+    uint8_t b0 = origin_mem_read(pat, addr + y);
 
     return b0 >> x & 1;
 }
 
-static inline uint8_t sample_2bpp(uint8_t *pat, uint16_t addr, bool flip_x, bool flip_y, uint8_t x, uint8_t y) {
+static inline uint8_t sample_2bpp(OriginMemSlot *pat, uint16_t addr, bool flip_x, bool flip_y, uint8_t x, uint8_t y) {
     if (!flip_x) x = 7 - x;
     if ( flip_y) y = 7 - y;
 
-    uint8_t b0 = pat[addr + y * 2];
-    uint8_t b1 = pat[addr + y * 2 + 1];
+    uint8_t b0 = origin_mem_read(pat, addr + y * 2);
+    uint8_t b1 = origin_mem_read(pat, addr + y * 2 + 1);
 
     return (b0 >> x & 1) | (b1 << 1 >> x & 2);
 }
 
-static inline uint8_t sample_3bpp(uint8_t *pat, uint16_t addr, bool flip_x, bool flip_y, uint8_t x, uint8_t y) {
+static inline uint8_t sample_3bpp(OriginMemSlot *pat, uint16_t addr, bool flip_x, bool flip_y, uint8_t x, uint8_t y) {
     if (!flip_x) x = 7 - x;
     if ( flip_y) y = 7 - y;
 
-    uint8_t b0 = pat[addr + y * 2];
-    uint8_t b1 = pat[addr + y * 2 + 1];
-    uint8_t b2 = pat[addr + y     + 16];
+    uint8_t b0 = origin_mem_read(pat, addr + y * 2);
+    uint8_t b1 = origin_mem_read(pat, addr + y * 2 + 1);
+    uint8_t b2 = origin_mem_read(pat, addr + y     + 16);
 
     return (b0 >> x & 1) | (b1 << 1 >> x & 2) | (b2 << 2 >> x & 4);
 }
 
 static inline void scan_map(Origin *emu, int y, uint32_t *pixels) {
     OriginRegisters *regs = &emu->hwregs;
-    uint8_t *pat = origin_mem_bytes(&emu->pat_bg);
+    OriginMemSlot *pat = &emu->pat_bg;
 
     if (!pat) return;
 
@@ -112,7 +112,7 @@ static inline void scan_map(Origin *emu, int y, uint32_t *pixels) {
 
 static inline void scan_spr(Origin *emu, int y, uint32_t *pixels) {
     OriginRegisters *regs = &emu->hwregs;
-    uint8_t *pat = origin_mem_bytes(&emu->pat_spr);
+    OriginMemSlot *pat = &emu->pat_spr;
 
     if (!pat) return;
 
@@ -177,7 +177,7 @@ static inline void scan_spr(Origin *emu, int y, uint32_t *pixels) {
 
 void scan_txt(Origin *emu, int y, uint32_t *pixels) {
     OriginRegisters *regs = &emu->hwregs;
-    uint8_t *pat = origin_mem_bytes(&emu->pat_txt);
+    OriginMemSlot *pat = &emu->pat_txt;
 
     if (!pat) return;
 

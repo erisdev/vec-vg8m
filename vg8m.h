@@ -172,6 +172,8 @@ void origin_mem_init_ram(OriginMemSlot *slot, uint16_t addr, uint16_t size);
 void origin_mem_init_rom(OriginMemSlot *slot, uint16_t addr, uint16_t size);
 void origin_mem_init_banked(OriginMemSlot *slot, uint16_t addr, uint16_t size);
 
+uint8_t origin_mem_read(OriginMemSlot *slot, uint16_t addr);
+void origin_mem_write(OriginMemSlot *slot, uint16_t addr, uint8_t data);
 bool origin_mem_set_bank(OriginMemSlot *slot, OriginMemBank *bank);
 
 void origin_bank_init(OriginMemBank *bank, uint16_t size, bool writable);

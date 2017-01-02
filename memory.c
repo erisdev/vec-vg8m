@@ -4,6 +4,8 @@
 #include <stdbool.h>
 #include <stdlib.h>
 
+static const char JUNK[] = "DUMPSTERDIVEMOTHER666";
+
 // COMMON
 
 void origin_mem_fin(OriginMemSlot *slot) {
@@ -38,6 +40,15 @@ uint16_t origin_mem_size(OriginMemSlot *slot) {
             return slot->fixed.size;
     }
     return 0;
+}
+
+uint8_t origin_mem_read(OriginMemSlot *slot, uint16_t addr) {
+    return slot->read(slot, addr);
+}
+
+void origin_mem_write(OriginMemSlot *slot, uint16_t addr, uint8_t data) {
+    if (slot->write)
+        slot->write(slot, addr, data);
 }
 
 // FIXED
@@ -81,7 +92,7 @@ static uint8_t _read_banked(OriginMemSlot *slot, uint16_t addr) {
         if (offset < slot->banked.bank->size)
             return slot->banked.bank->bytes[offset];
     }
-    return 0xFF;
+    return JUNK[addr & sizeof(JUNK)];
 }
 
 static void _write_banked(OriginMemSlot *slot, uint16_t addr, uint8_t data) {
@@ -146,7 +157,7 @@ uint8_t origin_read8(Origin *emu, uint16_t addr) {
     if (slot)
         return slot->read(slot, addr);
     else
-        return 0xFF;
+        return JUNK[addr & sizeof(JUNK)];
 }
 
 void origin_write8(Origin *emu, uint16_t addr, uint8_t data) {
@@ -163,7 +174,7 @@ uint16_t origin_read16(Origin *emu, uint16_t addr) {
     if (slot)
         l = slot->read(slot, addr);
     else
-        l = 0xFF;
+        l = JUNK[addr & sizeof(JUNK)];
 
     ++addr;
     if (!_inrange(addr, slot))
@@ -172,7 +183,7 @@ uint16_t origin_read16(Origin *emu, uint16_t addr) {
     if (slot)
         h = slot->read(slot, addr);
     else
-        h = 0xFF;
+        h = JUNK[addr & sizeof(JUNK)];
 
     return (h << 8) | l;
 }
