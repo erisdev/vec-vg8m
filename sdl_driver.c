@@ -146,7 +146,7 @@ int main(int argc, char **argv) {
     origin_init(emu);
 
     if (!origin_load_system(emu, "bios/system.bin", "bios/charset.1bpp"))
-        goto other_error;
+        goto origin_error;
 
     if (argc > 1 && !origin_load_cart(emu, argv[1]))
         goto other_error;
@@ -234,14 +234,14 @@ cleanup:
 
     return status;
 
-sdl_error:
-    fprintf(stderr, "%s\n", SDL_GetError());
+origin_error:
+    fprintf(stderr, "%s\n", origin_error());
 
     status = 1;
     goto cleanup;
 
-other_error:
-    fprintf(stderr, "%s\n", strerror(errno));
+sdl_error:
+    fprintf(stderr, "%s\n", SDL_GetError());
 
     status = 1;
     goto cleanup;

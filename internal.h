@@ -30,6 +30,8 @@ enum {
     CYCLES_DRAW   = 200,
 };
 
+void origin_set_error(const char *fmt, ...) __attribute__ ((format (printf, 1, 2)));
+
 static inline uint16_t _min(uint16_t a, uint16_t b) {
     return a < b ? a : b;
 }
