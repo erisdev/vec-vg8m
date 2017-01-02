@@ -24,7 +24,6 @@ VIDIUS ORIGIN (VEC-VG8M) - OVERVIEW
 ╟───────┼───────┼────┼──────────────────────────────╢
 ║ 0F00h │   40h │ RW │ Palettes                     ║
 ║ 0F40h │    2  │ RW │ Map nametable pointer        ║
-║ 0F42h │    2  │ RW │ Map tile pointer             ║
 ║ 0F44h │    1  │ RW │ Map height                   ║
 ║ 0F45h │    1  │ RW │ Map width                    ║
 ║ 0F46h │    2  │ RW │ Map V scroll                 ║
@@ -35,7 +34,6 @@ VIDIUS ORIGIN (VEC-VG8M) - OVERVIEW
 ║ 0F4Eh │    2  │ RW │ Text buffer V scroll         ║
 ║ 0F50h │    2  │ RW │ Text buffer H scroll         ║
 ║ 0F52h │    2  │ RW │ Sprite table pointer         ║
-║ 0F54h │    2  │ RW │ Sprite tile pointer          ║
 ║ 0F56h │    1  │ RW │ Sprite count                 ║
 ║ 0F58h │    2  │ R- │ Face buttons & pad           ║
 ╠═══════╧═══════╧════╧══════════════════════════════╣
