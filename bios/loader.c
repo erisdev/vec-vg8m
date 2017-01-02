@@ -12,6 +12,9 @@ typedef void (*int_handler_t)(void);
 static int_handler_t __at(0x0E20) int_vblank;
 static int_handler_t __at(0x0E22) int_hblank;
 
+__sfr __at(0x60) map_cart_prog;
+__sfr __at(0x61) map_cart_vrom;
+
 struct cart_header {
     char  magic[8];
     char  title[0x20];
@@ -79,6 +82,8 @@ void system_main(void) __naked {
     slow_print(msg_buffer, msg_loading);
     wait_frames(20);
 
+    map_cart_prog = 1;
+
     if (strncmp(cart.magic, "VEC-VG8M", sizeof(cart.magic)) != 0) {
         slow_print(msg_buffer, msg_unrecognized);
         goto failure;
@@ -105,6 +110,7 @@ void system_main(void) __naked {
 
     DI;
     int_vblank = int_ignore;
+    map_cart_vrom = 1;
 
     __asm
         ld      hl,(0x8080)

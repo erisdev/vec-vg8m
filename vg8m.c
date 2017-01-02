@@ -52,9 +52,8 @@ void origin_fin(Origin *emu) {
 }
 
 void origin_reset(Origin *emu) {
-    origin_mem_set_bank(&emu->pat_bg,  origin_cart_bank(emu->system, BANK_SLOT_BG,  0));
-    origin_mem_set_bank(&emu->pat_spr, origin_cart_bank(emu->system, BANK_SLOT_SPR, 0));
-
+    origin_map_system_prog(emu);
+    origin_map_system_vrom(emu);
     Z80NMI(emu->cpu);
 }
 
@@ -66,12 +65,21 @@ bool origin_load_system(Origin *emu, const char *filename) {
         return false;
 
     origin_mem_set_bank(&emu->memory.system_rom, origin_cart_bank(emu->system, BANK_SLOT_BIOS, 0));
-
-    origin_mem_set_bank(&emu->pat_txt, origin_cart_bank(emu->system, BANK_SLOT_TXT, 0));
-    origin_mem_set_bank(&emu->pat_bg,  origin_cart_bank(emu->system, BANK_SLOT_BG,  0));
-    origin_mem_set_bank(&emu->pat_spr, origin_cart_bank(emu->system, BANK_SLOT_SPR, 0));
+    origin_mem_set_bank(&emu->pat_txt,           origin_cart_bank(emu->system, BANK_SLOT_TXT,  0));
+    origin_map_system_prog(emu);
+    origin_map_system_vrom(emu);
 
     return true;
+}
+
+void origin_map_system_prog(Origin *emu) {
+    origin_mem_set_bank(&emu->memory.cart_prog, origin_cart_bank(emu->system, BANK_SLOT_PROG, 0));
+    origin_mem_set_bank(&emu->memory.cart_ext,  origin_cart_bank(emu->system, BANK_SLOT_EXT,  0));
+}
+
+void origin_map_system_vrom(Origin *emu) {
+    origin_mem_set_bank(&emu->pat_bg,  origin_cart_bank(emu->system, BANK_SLOT_BG,  0));
+    origin_mem_set_bank(&emu->pat_spr, origin_cart_bank(emu->system, BANK_SLOT_SPR, 0));
 }
 
 void origin_set_buttons(Origin *emu, OriginButtonMask buttons, bool pressed) {
@@ -186,7 +194,20 @@ static uint8_t _readio(Origin *emu, uint16_t addr) {
 }
 
 static void _writeio(Origin *emu, uint16_t addr, uint8_t data) {
-    if ((addr & 0xFF) == 0xFF) {
+    addr &= 0xFF;
+    if (addr == 0x60) {
+        if (data)
+            origin_map_cart_prog(emu);
+        else
+            origin_map_system_prog(emu);
+    }
+    else if (addr == 0x61) {
+        if (data)
+            origin_map_cart_vrom(emu);
+        else
+            origin_map_system_vrom(emu);
+    }
+    else if (addr == 0xFF) {
         putc(data, stderr);
     }
 }

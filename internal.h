@@ -41,6 +41,12 @@ enum {
     CYCLES_DRAW   = 200,
 };
 
+void origin_map_system_prog(Origin *emu);
+void origin_map_system_vrom(Origin *emu);
+
+void origin_map_cart_prog(Origin *emu);
+void origin_map_cart_vrom(Origin *emu);
+
 OriginMemBank *origin_cart_bank(OriginCart *cart, uint8_t slot, uint8_t id);
 
 void origin_set_error(const char *fmt, ...) __attribute__ ((format (printf, 1, 2)));

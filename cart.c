@@ -124,8 +124,6 @@ OriginMemBank *origin_cart_bank(OriginCart *cart, uint8_t slot, uint8_t id) {
 bool origin_insert_cart(Origin *emu, OriginCart *cart) {
     if (!emu->cart) {
         emu->cart = cart;
-        origin_mem_set_bank(&emu->memory.cart_prog, origin_cart_bank(cart, BANK_SLOT_PROG, 0));
-        origin_mem_set_bank(&emu->memory.cart_ext,  origin_cart_bank(cart, BANK_SLOT_EXT,  0));
         return true;
     }
     return false;
@@ -133,12 +131,20 @@ bool origin_insert_cart(Origin *emu, OriginCart *cart) {
 
 bool origin_remove_cart(Origin *emu) {
     if (emu->cart) {
-        origin_mem_set_bank(&emu->memory.cart_prog, NULL);
-        origin_mem_set_bank(&emu->memory.cart_ext,  NULL);
-        origin_mem_set_bank(&emu->pat_bg,  origin_cart_bank(emu->system, BANK_SLOT_BG,  0));
-        origin_mem_set_bank(&emu->pat_spr, origin_cart_bank(emu->system, BANK_SLOT_SPR, 0));
+        origin_map_system_prog(emu);
+        origin_map_system_vrom(emu);
         emu->cart = NULL;
         return true;
     }
     return false;
+}
+
+void origin_map_cart_prog(Origin *emu) {
+    origin_mem_set_bank(&emu->memory.cart_prog, origin_cart_bank(emu->cart, BANK_SLOT_PROG, 0));
+    origin_mem_set_bank(&emu->memory.cart_ext,  origin_cart_bank(emu->cart, BANK_SLOT_EXT,  0));
+}
+
+void origin_map_cart_vrom(Origin *emu) {
+    origin_mem_set_bank(&emu->pat_bg,  origin_cart_bank(emu->cart, BANK_SLOT_BG,  0));
+    origin_mem_set_bank(&emu->pat_spr, origin_cart_bank(emu->cart, BANK_SLOT_SPR, 0));
 }
