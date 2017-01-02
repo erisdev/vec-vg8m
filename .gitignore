@@ -1,5 +1,6 @@
 /vg8m
 .DS_Store
+*.[123]bpp
 *.adb
 *.bin
 *.cdb
