@@ -41,7 +41,14 @@ static const char msg_unrecognized[] = "UNRECOGNIZED CARTRIDGE          ";
 static const char msg_bad_entry[]    = "BAD ENTRY POINT                 ";
 static const char msg_bad_checksum[] = "BAD CHECKSUM                    ";
 
-const char palette[] = {0x00, 0x13};
+static const short logo[] = {
+    0x0001, 0x0002, 0x0003, 0x0004, 0x0000, 0x0000, 0x0000, 0x0000, 0x0000, 0x0000,
+    0x000B, 0x0000, 0x0000, 0x000C, 0x0005, 0x0006, 0x0007, 0x0008, 0x0009, 0x000A,
+    0x0000, 0x0000, 0x0000, 0x000D, 0x000F, 0x0010, 0x0011, 0x0012, 0x0013, 0x0014,
+    0x0000, 0x0000, 0x000E, 0x1801, 0x0000, 0x0000, 0x0000, 0x0000, 0x0000, 0x0000,
+};
+
+const char palette[] = {0x00, 0x13, 0x15};
 
 const char fade_to_red[]   = {0x11, 0x0F, 0x02, 0x1A, 0x1C};
 const char fade_to_black[] = {0x11, 0x0F, 0x02, 0x01, 0x00};
@@ -50,6 +57,12 @@ void system_main(void) __naked {
     int i;
 
     memcpy(r_palettes[0], palette, sizeof(palette));
+
+    r_map_name_addr = logo;
+    r_map_vsize     =  4;
+    r_map_hsize     = 10;
+    r_map_vscroll   =  0;
+    r_map_hscroll   =  0;
 
     r_txt_addr    = msg_buffer;
     r_txt_vsize   =   3;
