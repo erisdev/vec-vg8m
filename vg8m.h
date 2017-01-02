@@ -147,7 +147,7 @@ void origin_fin(Origin *emu);
 
 void origin_reset(Origin *emu);
 
-bool origin_load_system(Origin *emu, const char *system_filename, const char *bios_filename, const char *charset_filename);
+bool origin_load_system(Origin *emu, const char *filename);
 
 void origin_set_buttons(Origin *emu, OriginButtonMask buttons, bool pressed);
 

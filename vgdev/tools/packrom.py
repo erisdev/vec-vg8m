@@ -1,13 +1,21 @@
 import click
 from struct import Struct
 
-BankSlot = click.Choice(('prog', 'ext', 'bg', 'spr'))
-
 MAGIC = b'VGDMP100'
 FILE_HEADER = Struct('<8sHH')
 BANK_HEADER = Struct('<HHBBH')
 
-SLOT_ID = {'prog': 0, 'ext': 1, 'bg': 2, 'spr': 3}
+SLOT_ID = {
+    'prog': 0x00,
+    'ext':  0x01,
+    'bg':   0x02,
+    'spr':  0x03,
+
+    'bios': 0xF0,
+    'txt':  0xF1,
+}
+
+BankSlot = click.Choice(SLOT_ID.keys())
 
 CHUNK_SIZE = 512
 def iter_chunks(f):
@@ -33,7 +41,7 @@ def packrom(output, banks):
 
     output.seek(FILE_HEADER.size)
 
-    id_counter = {'prog': 0, 'ext': 0, 'bg': 0, 'spr': 0};
+    id_counter = dict(map(lambda x: (x, 0), SLOT_ID.keys()))
     for (slot, input) in banks:
         # skip bank header & write the bank data first
         output.seek(BANK_HEADER.size, 1)

@@ -11,14 +11,14 @@ static uint8_t _readio(Origin *emu, uint16_t addr);
 static void _writeio(Origin *emu, uint16_t addr, uint8_t data);
 
 void origin_init(Origin *emu) {
-    origin_mem_init_rom(&emu->memory.system_rom,     SYS_ROM_ADDR,  SYS_ROM_SIZE);
+    origin_mem_init_banked(&emu->memory.system_rom,  SYS_ROM_ADDR,  SYS_ROM_SIZE);
     origin_mem_init_ram(&emu->memory.system_ram,     SYS_RAM_ADDR,  SYS_RAM_SIZE);
     origin_mem_init(&emu->memory.hwregs,             HWREGS_ADDR,   HWREGS_SIZE, &emu->hwregs, NULL);
     origin_mem_init_ram(&emu->memory.user_ram,       USER_RAM_ADDR, USER_RAM_SIZE);
     origin_mem_init_banked(&emu->memory.cart_prog,   CART_ROM_ADDR, CART_ROM_SIZE);
     origin_mem_init_banked(&emu->memory.cart_prog,   CART_ROM_ADDR, CART_ROM_SIZE);
 
-    origin_mem_init_rom(&emu->pat_txt,    0, PAT_TXT_SIZE);
+    origin_mem_init_banked(&emu->pat_txt, 0, PAT_TXT_SIZE);
     origin_mem_init_banked(&emu->pat_bg,  0, PAT_BG_SIZE);
     origin_mem_init_banked(&emu->pat_spr, 0, PAT_SPR_SIZE);
 
@@ -52,30 +52,24 @@ void origin_fin(Origin *emu) {
 }
 
 void origin_reset(Origin *emu) {
+    origin_mem_set_bank(&emu->pat_bg,  origin_cart_bank(emu->system, BANK_SLOT_BG,  0));
+    origin_mem_set_bank(&emu->pat_spr, origin_cart_bank(emu->system, BANK_SLOT_SPR, 0));
+
     Z80NMI(emu->cpu);
 }
 
-static bool _load_file(OriginMemSlot *slot, uint16_t size, const char *filename) {
-    int fd = open(filename, O_RDONLY);
-    if (fd == -1)
-        goto error;
+bool origin_load_system(Origin *emu, const char *filename) {
+    emu->system = calloc(1, sizeof(OriginCart));
+    origin_cart_init(emu->system);
 
-    if (read(fd, origin_mem_bytes(slot), size) == -1)
-        goto error;
-
-    close(fd);
-    return true;
-error:
-    if (fd != -1) close(fd);
-    return false;
-}
-
-bool origin_load_system(Origin *emu, const char *rom_filename, const char *charset_filename) {
-    if (!_load_file(&emu->memory.system_rom, SYS_ROM_SIZE, rom_filename))
+    if (!origin_cart_load(emu->system, filename))
         return false;
 
-    if (!_load_file(&emu->pat_txt, PAT_TXT_SIZE, charset_filename))
-        return false;
+    origin_mem_set_bank(&emu->memory.system_rom, origin_cart_bank(emu->system, BANK_SLOT_BIOS, 0));
+
+    origin_mem_set_bank(&emu->pat_txt, origin_cart_bank(emu->system, BANK_SLOT_TXT, 0));
+    origin_mem_set_bank(&emu->pat_bg,  origin_cart_bank(emu->system, BANK_SLOT_BG,  0));
+    origin_mem_set_bank(&emu->pat_spr, origin_cart_bank(emu->system, BANK_SLOT_SPR, 0));
 
     return true;
 }

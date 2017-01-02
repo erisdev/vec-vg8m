@@ -146,7 +146,7 @@ int main(int argc, char **argv) {
     emu = calloc(1, sizeof(Origin));
     origin_init(emu);
 
-    if (!origin_load_system(emu, "bios/system.bin", "bios/charset.1bpp"))
+    if (!origin_load_system(emu, "bios/system.vg8"))
         goto origin_error;
 
     if (argc > 1) {
