@@ -10,9 +10,10 @@ LDFLAGS += -L$(Z80_DIR) -lz80 -g \
 .PHONY : all
 all : vg8m bios demo
 
-vg8m : sdl_driver.o vg8m.o cart.o video.o | libz80
+vg8m : sdl_driver.o vg8m.o cart.o memory.o video.o | libz80
 
 cart.o : cart.c vg8m.h
+memory.o : memory.c vg8m.h
 vg8m.o : vg8m.c vg8m.h
 video.o : video.c vg8m.h
 sdl_driver.o : sdl_driver.c vg8m.h

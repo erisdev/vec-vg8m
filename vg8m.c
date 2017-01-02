@@ -5,33 +5,22 @@
 #include <memory.h>
 #include <stdbool.h>
 #include <stdlib.h>
-
-#ifdef USE_MMAP
-#include <sys/mman.h>
-#else
 #include <unistd.h>
-#endif
-
-static uint8_t *_load_file(uint16_t size, const char *filename);
-static void _unload_file(uint8_t *buffer, uint16_t size);
 
 static uint8_t _readio(VG8M *emu, uint16_t addr);
 static void _writeio(VG8M *emu, uint16_t addr, uint8_t data);
 
-static uint8_t _readmem(VG8M *emu, uint16_t addr);
-static void _writemem(VG8M *emu, uint16_t addr, uint8_t data);
-
 void vg8m_init(VG8M *emu) {
-    emu->system_ram     = calloc(SYS_RAM_SIZE, sizeof(uint8_t));
-    emu->user_ram       = calloc(USER_RAM_SIZE, sizeof(uint8_t));
-    emu->cart_prog_rom  = calloc(CART_ROM_SIZE, sizeof(uint8_t));
-    emu->cart_2bpp_rom  = calloc(CART_2BPP_SIZE, sizeof(uint8_t));
-    emu->cart_3bpp_rom  = calloc(CART_3BPP_SIZE, sizeof(uint8_t));
+    vg8m_rom_init(&emu->memory.system_rom,     SYS_ROM_ADDR,  SYS_ROM_SIZE);
+    vg8m_ram_init(&emu->memory.system_ram,     SYS_RAM_ADDR,  SYS_RAM_SIZE);
+    vg8m_rom_init(&emu->memory.system_charset, CHAR_ROM_ADDR, CHAR_ROM_SIZE);
+    vg8m_ram_init(&emu->memory.user_ram,       USER_RAM_ADDR, USER_RAM_SIZE);
+    vg8m_rom_init(&emu->memory.cart_prog,      CART_ROM_ADDR, CART_ROM_SIZE);
+    vg8m_rom_init(&emu->cart_2bpp_rom,         0,             CART_2BPP_SIZE);
+    vg8m_rom_init(&emu->cart_3bpp_rom,         0,             CART_3BPP_SIZE);
 
-    // memcpy(emu->system_rom,     bios_system_bin,   bios_system_bin_len);
-    // memcpy(emu->system_charset, bios_charset_1bpp, bios_charset_1bpp_len);
-    // load_system_rom(emu, "bios/system.bin");
-    // load_system_charset(emu, "bios/charset.dat");
+    vg8m_memory_init(&emu->memory.hwregs, HWREGS_ADDR, HWREGS_SIZE,
+        &emu->hwregs, VG8M_MEM_READ_DEFAULT, VG8M_MEM_WRITE_DEFAULT, NULL);
 
     emu->cpu = calloc(1, sizeof(Z80Context));
     emu->cpu->ioParam = emu;
@@ -39,8 +28,8 @@ void vg8m_init(VG8M *emu) {
     emu->cpu->ioWrite = (Z80DataOut)_writeio;
 
     emu->cpu->memParam = emu;
-    emu->cpu->memRead = (Z80DataIn)_readmem;
-    emu->cpu->memWrite = (Z80DataOut)_writemem;
+    emu->cpu->memRead = (Z80DataIn)vg8m_read8;
+    emu->cpu->memWrite = (Z80DataOut)vg8m_write8;
 
     emu->mode = MODE_HBLANK;
     emu->modeclock = 0;
@@ -48,72 +37,43 @@ void vg8m_init(VG8M *emu) {
 }
 
 void vg8m_fin(VG8M *emu) {
-    // free(emu->system_rom);
-    free(emu->system_ram);
-    free(emu->user_ram);
-    free(emu->cart_prog_rom);
-    free(emu->cart_2bpp_rom);
-    free(emu->cart_3bpp_rom);
-    free(emu->cpu);
+    vg8m_memory_fin(&emu->memory.system_rom);
+    vg8m_memory_fin(&emu->memory.system_ram);
+    vg8m_memory_fin(&emu->memory.user_ram);
+    vg8m_memory_fin(&emu->memory.cart_prog);
+    vg8m_memory_fin(&emu->cart_2bpp_rom);
+    vg8m_memory_fin(&emu->cart_3bpp_rom);
 
-    _unload_file(emu->system_rom, SYS_ROM_SIZE);
-    _unload_file(emu->system_charset, CHAR_ROM_SIZE);
+    free(emu->cpu);
 }
 
 void vg8m_reset(VG8M *emu) {
     Z80NMI(emu->cpu);
 }
 
-static uint8_t *_load_file(uint16_t size, const char *filename) {
-    uint8_t *buffer = NULL;
-
+static bool _load_file(uint8_t *buffer, uint16_t size, const char *filename) {
     int fd = open(filename, O_RDONLY);
-    if (fd == -1) goto error;
-
-#ifdef USE_MMAP
-    buffer = mmap(NULL, size, PROT_READ, MAP_FILE | MAP_PRIVATE, fd, 0);
-    if (!buffer) goto error;
-#else
-    buffer = calloc(size, 1);
-    if (!buffer)
+    if (fd == -1)
         goto error;
+
     if (read(fd, buffer, size) == -1)
         goto error;
-#endif
 
-    return buffer;
+    close(fd);
+    return true;
 error:
-    if (buffer) _unload_file(buffer, size);
-    return NULL;
-}
-
-static void _unload_file(uint8_t *buffer, uint16_t size) {
-#ifdef USE_MMAP
-    if (buffer) munmap(buffer, size);
-#else
-    if (buffer) free(buffer);
-#endif
+    if (fd != -1) close(fd);
+    return false;
 }
 
 bool vg8m_load_system(VG8M *emu, const char *rom_filename, const char *charset_filename) {
-    uint8_t *rom_buffer = NULL, *charset_buffer = NULL;
+    if (!_load_file(emu->memory.system_rom.data, SYS_ROM_SIZE, rom_filename))
+        return false;
 
-    rom_buffer = _load_file(SYS_ROM_SIZE, rom_filename);
-    if (!rom_buffer)
-        goto error;
-
-    charset_buffer = _load_file(CHAR_ROM_SIZE, charset_filename);
-    if (!charset_buffer)
-        goto error;
-
-    emu->system_rom = rom_buffer;
-    emu->system_charset = charset_buffer;
+    if (!_load_file(emu->memory.system_charset.data, CHAR_ROM_SIZE, charset_filename))
+        return false;
 
     return true;
-error:
-    _unload_file(rom_buffer, SYS_ROM_SIZE);
-    _unload_file(charset_buffer, CHAR_ROM_SIZE);
-    return false;
 }
 
 void vg8m_set_buttons(VG8M *emu, VG8MButtonMask buttons, bool pressed) {
@@ -121,24 +81,6 @@ void vg8m_set_buttons(VG8M *emu, VG8MButtonMask buttons, bool pressed) {
         emu->hwregs.buttons |= buttons;
     else
         emu->hwregs.buttons &= ~buttons;
-}
-
-uint8_t vg8m_read8(VG8M *emu, uint16_t addr) {
-    return _readmem(emu, addr);
-}
-
-void vg8m_write8(VG8M *emu, uint16_t addr, uint8_t data) {
-    _writemem(emu, addr, data);
-}
-
-uint16_t vg8m_read16(VG8M *emu, uint16_t addr) {
-    return (_readmem(emu, addr + 1) << 8)
-          | _readmem(emu, addr);
-}
-
-void vg8m_write16(VG8M *emu, uint16_t addr, uint16_t data) {
-    _writemem(emu, addr,    data);
-    _writemem(emu, addr+ 1, data >> 8);
 }
 
 void vg8m_step_frame(VG8M *emu) {
@@ -241,10 +183,6 @@ void vg8m_hblank(VG8M *emu) {
     Z80INT(emu->cpu, INT_HBLANK);
 }
 
-static inline bool inregion(uint16_t addr, uint16_t begin, uint16_t end) {
-    return addr >= begin && addr <= end;
-}
-
 static uint8_t _readio(VG8M *emu, uint16_t addr) {
     return 0xFF;
 }
@@ -253,37 +191,4 @@ static void _writeio(VG8M *emu, uint16_t addr, uint8_t data) {
     if ((addr & 0xFF) == 0xFF) {
         putc(data, stderr);
     }
-}
-
-static uint8_t _readmem(VG8M *emu, uint16_t addr) {
-    if      (inregion(addr, SYS_ROM_ADDR, SYS_ROM_END) && emu->system_rom)
-        return emu->system_rom[addr - SYS_ROM_ADDR];
-
-    else if (inregion(addr, SYS_RAM_ADDR, SYS_RAM_END))
-        return emu->system_ram[addr - SYS_RAM_ADDR];
-
-    else if (inregion(addr, HWREGS_ADDR, HWREGS_END))
-        return ((uint8_t*)&(emu->hwregs))[addr - HWREGS_ADDR];
-
-    else if (inregion(addr, CHAR_ROM_ADDR, CHAR_ROM_END) && emu->system_charset)
-        return emu->system_charset[addr - CHAR_ROM_ADDR];
-
-    else if (inregion(addr, USER_RAM_ADDR, USER_RAM_END))
-        return emu->user_ram[addr - USER_RAM_ADDR];
-
-    else if (inregion(addr, CART_ROM_ADDR, CART_ROM_END))
-        return emu->cart_prog_rom[addr - CART_ROM_ADDR];
-
-    return 0xFF;
-}
-
-static void _writemem(VG8M *emu, uint16_t addr, uint8_t data) {
-    if      (inregion(addr, SYS_RAM_ADDR, SYS_RAM_END))
-        emu->system_ram[addr - SYS_RAM_ADDR] = data;
-
-    else if (inregion(addr, HWREGS_ADDR, HWREGS_END))
-        ((uint8_t*)&(emu->hwregs))[addr - HWREGS_ADDR] = data;
-
-    else if (inregion(addr, USER_RAM_ADDR, USER_RAM_END))
-        emu->user_ram[addr - USER_RAM_ADDR] = data;
 }

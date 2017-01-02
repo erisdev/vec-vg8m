@@ -43,21 +43,21 @@ bool vg8m_load_cart(VG8M *emu, const char *filename) {
     len = _min(header.prog_size, CART_ROM_SIZE);
     if (len > 0) {
         if (lseek(fd, header.prog_offset, SEEK_SET) == -1
-        ||  read(fd, emu->cart_prog_rom, len) == -1)
+        ||  read(fd, emu->memory.cart_prog.data, len) == -1)
             goto error;
     }
 
     len = _min(header.pat_2bpp_size, CART_ROM_SIZE);
     if (len > 0) {
         if (lseek(fd, header.pat_2bpp_offset, SEEK_SET) == -1
-        ||  read(fd, emu->cart_2bpp_rom, header.pat_2bpp_size) == -1)
+        ||  read(fd, emu->cart_2bpp_rom.data, len) == -1)
             goto error;
     }
 
     len = _min(header.pat_3bpp_size, CART_ROM_SIZE);
     if (len > 0) {
         if (lseek(fd, header.pat_3bpp_offset, SEEK_SET) == -1
-        ||  read(fd, emu->cart_3bpp_rom, header.pat_3bpp_size) == -1)
+        ||  read(fd, emu->cart_3bpp_rom.data, len) == -1)
             goto error;
     }
 

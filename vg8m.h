@@ -6,8 +6,13 @@
 
 typedef struct s_vg8m VG8M;
 typedef struct s_vg8m_hwregs VG8MRegisters;
+typedef struct s_vg8m_memory VG8MMemory;
 
 typedef void (*VG8MCallback)(VG8M *emu, void *param);
+
+typedef uint8_t (*VG8MMemRead)(VG8MMemory *bank, uint16_t addr);
+typedef void    (*VG8MMemWrite)(VG8MMemory *bank, uint16_t addr, uint8_t value);
+typedef void    (*VG8MMemFree)(VG8MMemory *bank);
 
 struct s_vg8m_hwregs {
     /* gpu */
@@ -32,17 +37,36 @@ struct s_vg8m_hwregs {
     uint16_t buttons;
 };
 
+struct s_vg8m_memory {
+    uint16_t begin;
+    uint16_t end;
+    uint16_t size;
+
+    void *data;
+
+    VG8MMemRead read;
+    VG8MMemWrite write;
+    VG8MMemFree free;
+};
+
 struct s_vg8m {
     Z80Context *cpu;
 
-    uint8_t *system_rom;
-    uint8_t *system_ram;
-    uint8_t *system_charset;
-    uint8_t *user_ram;
-    uint8_t *cart_prog_rom;
-    uint8_t *cart_2bpp_rom;
-    uint8_t *cart_3bpp_rom;
+    union {
+        VG8MMemory banks[6];
+        struct {
+            VG8MMemory system_rom;
+            VG8MMemory system_ram;
+            VG8MMemory system_charset;
+            VG8MMemory hwregs;
+            VG8MMemory user_ram;
+            VG8MMemory cart_prog;
+        };
+    } memory;
+
     VG8MRegisters hwregs;
+    VG8MMemory cart_2bpp_rom;
+    VG8MMemory cart_3bpp_rom;
 
     VG8MCallback scanline_callback;
     void *scanline_param;
@@ -107,3 +131,14 @@ void vg8m_vblank(VG8M *emu);
 void vg8m_hblank(VG8M *emu);
 
 void vg8m_scanline(VG8M *emu, uint32_t *pixels);
+
+// MEMORY
+
+void vg8m_memory_init(VG8MMemory *bank, uint16_t addr, uint16_t size, void *data, VG8MMemRead read_func, VG8MMemWrite write_func, VG8MMemFree free_func);
+void vg8m_memory_fin(VG8MMemory *bank);
+void vg8m_ram_init(VG8MMemory *bank, uint16_t begin, uint16_t size);
+void vg8m_rom_init(VG8MMemory *bank, uint16_t begin, uint16_t size);
+
+uint8_t VG8M_MEM_READ_DEFAULT(VG8MMemory *bank, uint16_t addr);
+void VG8M_MEM_WRITE_DEFAULT(VG8MMemory *bank, uint16_t addr, uint8_t data);
+static void VG8M_MEM_FREE_DEFAULT(VG8MMemory *bank);
