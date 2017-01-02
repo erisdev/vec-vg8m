@@ -140,6 +140,7 @@ void _display(Origin *emu, void *_) {
 }
 
 int main(int argc, char **argv) {
+    OriginCart *cart = NULL;
     int status = 0;
 
     emu = calloc(1, sizeof(Origin));
@@ -148,8 +149,15 @@ int main(int argc, char **argv) {
     if (!origin_load_system(emu, "bios/system.bin", "bios/charset.1bpp"))
         goto origin_error;
 
-    if (argc > 1 && !origin_load_cart(emu, argv[1]))
-        goto other_error;
+    if (argc > 1) {
+        cart = calloc(1, sizeof(OriginCart));
+        origin_cart_init(cart);
+
+        if (!origin_cart_load(cart, argv[1]))
+            goto origin_error;
+
+        origin_insert_cart(emu, cart);
+    }
 
     emu->display_callback  = _display;
     emu->scanline_callback = _scanline;
@@ -215,6 +223,12 @@ int main(int argc, char **argv) {
     }
 
 cleanup:
+    if (cart) {
+        origin_remove_cart(emu);
+        origin_cart_fin(cart);
+        free(cart);
+    }
+
     if (emu) {
         origin_fin(emu);
         free(emu);

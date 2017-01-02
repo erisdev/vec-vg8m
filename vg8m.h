@@ -8,6 +8,7 @@ typedef struct s_origin Origin;
 typedef struct s_origin_hwregs OriginRegisters;
 typedef struct s_origin_membank OriginMemBank;
 typedef struct s_origin_memslot OriginMemSlot;
+typedef struct s_origin_cartridge OriginCart;
 
 typedef void (*OriginCallback)(Origin *emu, void *param);
 
@@ -66,11 +67,18 @@ struct s_origin_memslot {
     };
 };
 
+struct s_origin_cartridge {
+    OriginMemBank prog;
+    OriginMemBank ext;
+    OriginMemBank bg;
+    OriginMemBank spr;
+};
+
 struct s_origin {
     Z80Context *cpu;
 
     union {
-        OriginMemSlot slots[6];
+        OriginMemSlot slots[7];
         struct {
             OriginMemSlot system_rom;
             OriginMemSlot system_ram;
@@ -78,8 +86,15 @@ struct s_origin {
             OriginMemSlot hwregs;
             OriginMemSlot user_ram;
             OriginMemSlot cart_prog;
+            OriginMemSlot cart_ext;
         };
     } memory;
+
+    OriginMemSlot pat_bg;
+    OriginMemSlot pat_spr;
+
+    OriginCart *cart;
+    OriginCart *system;
 
     OriginRegisters hwregs;
 
@@ -127,7 +142,6 @@ void origin_fin(Origin *emu);
 void origin_reset(Origin *emu);
 
 bool origin_load_system(Origin *emu, const char *rom_filename, const char *charset_filename);
-bool origin_load_cart(Origin *emu, const char *filename);
 
 void origin_set_buttons(Origin *emu, OriginButtonMask buttons, bool pressed);
 
@@ -162,3 +176,16 @@ bool origin_mem_set_bank(OriginMemSlot *slot, OriginMemBank *bank);
 
 void origin_bank_init(OriginMemBank *bank, uint16_t size, bool writable);
 void origin_bank_fin(OriginMemBank *bank);
+
+// CARTRIDGE
+
+void origin_cart_init(OriginCart *cart);
+void origin_cart_fin(OriginCart *cart);
+bool origin_cart_load(OriginCart *cart, const char *filename);
+
+bool origin_insert_cart(Origin *emu, OriginCart *cart);
+bool origin_remove_cart(Origin *emu);
+
+// ERROR REPORTING
+
+const char *origin_error();
